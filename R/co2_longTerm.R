@@ -1,59 +1,67 @@
 #### 1. Preliminaries #########################################
+require(openair)
+require(dplyr)
 source('R/tools/tool_convert_magic.R')
 source('R/tools/tool_charactersNumeric.R')
-source('R/tools/trapezium_intg_2.R')
-source('R/tools/trapezium_intg_3.R')
+source('R/tools/tool_trapezium_intg_2.R')
+source('R/tools/tool_trapezium_intg_3.R')
 
-#####import satdata ###############
-chl <- read.csv('data/5year_chlor_Aqua.csv')
-sst <- read.csv('data/5year_SST_Aqua.csv')
-poc <- read.csv('data/5year_POC_Aqua.csv')
-pic <- read.csv('data/5year_PIC_Aqua.csv')
-par <- read.csv('data/5year_PAR_Aqua.csv')
 
-#### marge variables satdata#####
+#### SATELLITE DATA ANALYSIS ####
+#### import sat data ###############
+chl <- read.csv('data/satellite/5year_chlor_Aqua.csv')
+sst <- read.csv('data/satellite/5year_SST_Aqua.csv')
+poc <- read.csv('data/satellite/5year_POC_Aqua.csv')
+pic <- read.csv('data/satellite/5year_PIC_Aqua.csv')
+par <- read.csv('data/satellite/5year_PAR_Aqua.csv')
+
+#### merge variables sat data #####
 #df1 <- merge(chl,sst,par,poc,pic,by= c('DATE'),all=TRUE)
 
 x1<- merge(chl,sst)
 x2<- merge(poc,pic)
 x3<- merge(x1,x2)
-df1<- merge(x3,par)
+df_sat<- merge(x3,par)
+rm(chl,par,pic,poc,sst,x1,x2,x3)
 
+# Remove letters in date
 
-#Remove words in date
-df1$DATE <- gsub("T"," ", df1$DATE)        # This is to remove letter T
-df1$DATE <- strptime(df1$DATE, format = "%Y-%m-%d %H:%M:%OS", tz = "Asia/Kuala_Lumpur")
-class (df1$DATE)             #To check the format, make sure is POSIXlt POSIXt
-df1$DATE <- as.POSIXct.POSIXlt(df1$DATE) #Change to POSIXct format
+df_sat$DATE <- gsub("T"," ", df_sat$DATE)         # This is to remove the letter T
+df_sat$DATE <- strptime(df_sat$DATE, 
+                        format = "%Y-%m-%d %H:%M:%OS", 
+                        tz = "Asia/Kuala_Lumpur")
+#class (df_sat$DATE)                              #To check the format, make sure is POSIXlt POSIXt
+df_sat$DATE <- as.POSIXct.POSIXlt(df_sat$DATE)    #Change to POSIXct format
 
-
-df1<- df1[which(df1$DATE >= as.POSIXct(as.Date("2016-01-01"))& df1$DATE<= as.POSIXct(as.Date("2020-12-31"))),]
+df_sat<- df_sat[which(df_sat$DATE >= as.POSIXct(as.Date("2016-01-01")) 
+                       & df_sat$DATE <= as.POSIXct(as.Date("2020-12-31"))),]
 
 # Changing all the '-32767.0' or '-32767' (missing data) to NA
-for (i in 4:8){      #This means column number 4 to coloumn number 8
-  df1[i][df1[i] == '-32767' | df1[i] == '-32767.0'] <- NA
+for (i in 4:8){                                   #This means column number 4 to coloumn number 8
+  df_sat[i][df_sat[i] == '-32767' | df_sat[i] == '-32767.0'] <- NA
 }
 rm(i)
 
-#Time Average
-library(openair)
-#Need to change name DATE to date
-colnames(df1)[1] <- "date"
+#### Averaging sat data #####
 
-#Average the time to monthly
-df1_month <- timeAverage(df1, avg.time = "1 month")
+# Need to change name DATE to date
+colnames(df_sat)[1] <- "date"
 
-#Average the time to 1 year
-df1_year <- timeAverage(df1, avg.time = "1 year")
+#Average data to monthly intervals
+df_sat_month <- timeAverage(df_sat, avg.time = "1 month")
+
+#Average data to yearly intervals
+df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
 
 
+#### EC DATA ANALYSIS ####
 
 ### import EC data######
-df_ec<-read.csv('data/MCO-MUKA21_full_output.csv')
-df_biomet<- read.csv('data/biomet data 21.csv')
+df_ec<-read.csv('data/station/MCO-MUKA21_full_output.csv')
+df_biomet<- read.csv('data/station/biomet data 21.csv')
 
 # Delete unnecessary columns and rows in EC data files
-df_ec<- df_ec[-1,]  #remove the 1th row 
+df_ec<- df_ec[-1,]  #remove the 1st row 
 
 
 # Delete unnecessary columns and rows in biomet data files
@@ -64,7 +72,7 @@ df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unamed)
 colnames(df_ec)[1] <- "DATE"
 colnames(df_biomet)[7] <- "DATE"
 
-#merge df with df_bimet ####
+#### merge df with df_bimet ####
 df <- merge(df_ec,df_biomet,by= c('DATE'))
 
 
@@ -80,25 +88,34 @@ rm(i)
 # Change all non-factors (or characters) to numeric 
 df[,-1] <- charactersNumeric(df[,-1])
 
-#To check the class
-sapply(df,class)
+# To check the class
+#sapply(df,class)
 
-#Change the date to POSIXCT format
+# Change the date to POSIXCT format
 df$DATE <- strptime(df$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
-class(df$DATE)
+#class(df$DATE)
 df$DATE <- as.POSIXct.POSIXlt(df$DATE)
 
 #Change name DATE to date
 colnames(df)[1] <- "date"
 
-#extracting related variables from the raw variables
-df <- data.frame(df$date,df$DOY,df$WS,df$WD,df$FCO2,df$RN_1_1_1,df$RH_1_1_1,df$H2O,df$H,df$LE,df$ZL,df$SH,df$SLE,df$P_RAIN_1_1_1,df$TA_1_1_1,df$ET,df$PPFD_1_1_1,df$USTAR,df$RG_1_1_1,df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC)
+# extracting related variables from raw variables
+df <- data.frame(df$date,df$DOY,df$WS,df$WD,
+                 df$FCO2,df$RN_1_1_1,df$RH_1_1_1,df$H2O,
+                 df$H,df$LE,df$ZL,df$SH,df$SLE,
+                 df$P_RAIN_1_1_1,df$TA_1_1_1,df$ET,
+                 df$PPFD_1_1_1,df$USTAR,df$RG_1_1_1,
+                 df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC)
 
 
 #Rename variables
-colnames(df) <- c("date","DOY","WS","WD","FCO2","RN","RH","H2O","H","LE","ZL","SH","SLE","P_RAIN","TA","ET","PPFD","USTAR","RG","TS","H_QC","LE_QC","FCO2_QC")
+colnames(df) <- c("date","DOY","WS","WD",
+                  "FCO2","RN","RH","H2O",
+                  "H","LE","ZL","SH","SLE",
+                  "P_RAIN","TA","ET","PPFD",
+                  "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC")
 
-#Convert TA, TS from K to Celcius
+# Convert TA, TS from K to Celcius
 df$TA<- df$TA - 273.15
 df$TS<- df$TS - 273.15
 
@@ -107,73 +124,81 @@ df$TS<- df$TS - 273.15
 df$TA[which(df$TA < 0 | df$TA > 100 )] <- NA
 df$TS[which(df$TS < 0 )] <- NA
 
-#random filter
+# random filter
 df$TA[df$TA < 20 | df$TA > 40] <- NA
 df$TS[df$TS < 20 | df$TS > 40] <- NA
 #df$SST[df$SST < 10 | df$SST > 50] <- NA
+
 df$RH[df$RH < 25 | df$RH > 100] <- NA
+
 df$RN[df$RN < -100] <- NA
+
 df$RN[df$RN > 400] <- NA
+
 df$LE[which(df$LE_QC == 2)] <- NA 
+
 df$H[which(df$H_QC == 2)] <- NA 
+
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
 
 
-####stability values#####
+#### atmospheric stability values#####
 
-y <- df$ZL[which(df$ZL < -0.1)] #unstable  
-z <- df$ZL [(df$ZL < -0.1 &  df$ZL >0.1)]  #neutral
-x <- df$ZL[which(df$ZL >0.1)]#stable
+unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
+neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]   #neutral, previously z
+stable <- df$ZL[which(df$ZL > 0.1)]             #stable, previously x
 
-#Average to 1 month
-df_month <- timeAverage(df,avg.time = "1 month")
+# Average to 1 month
+df_month <- timeAverage(df, avg.time = "1 month")
 
-#Average to 1 year
-df_year <- timeAverage(df,avg.time = "1 year")
+# Average to 1 year
+df_year <- timeAverage(df, avg.time = "1 year")
 
-#Merge satellite and eddy covariance data by month
-df_merge_month <- merge(df_month,df1_month, by = "date")
+# Merge satellite and eddy covariance data by month
+df_merge_month <- merge(df_month, df_sat_month, by = "date")
 
-#Merge satellite and eddy covariance data by year
-df_merge_year <- merge(df_year,df1_year, by = "date")
+# Merge satellite and eddy covariance data by year
+df_merge_year <- merge(df_year, df_sat_year, by = "date")
 
-#Random Filter after merge
-df_merge_month$CHL[df_merge_month$CHL >3] <- NA
-df_merge_month$TS[df_merge_month$TS >34] <- NA
+# Random Filter after merge
+df_merge_month$CHL[df_merge_month$CHL > 3] <- NA
+df_merge_month$TS[df_merge_month$TS > 34] <- NA
 
-#partitioning monsoon analysis
-library(dplyr)
-library(openair)
+rm(df_biomet, df_ec)
+
+#### partitioning monsoon analysis ####
+
 NEM <- selectByDate(df_merge_month, month = c(12,1,2,3))
 SWM <- selectByDate(df_merge_month, month = c(6,7,8,9))
 FTM <- selectByDate(df_merge_month, month = c(10,11))
 STM <- selectByDate(df_merge_month, month = c(4,5))
 
-#average and sd monsoon
-mean_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-sd_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-df_NEM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-colnames(df_NEM) <- c("Mean_NEM","SD_NEM")
+# # Mean and SD for each monsoon
+# mean_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
+# sd_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
+# df_NEM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
+# colnames(df_NEM) <- c("Mean_NEM","SD_NEM")
+# 
+# mean_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
+# sd_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
+# df_SWM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
+# colnames(df_SWM) <- c("Mean_SWM","SD_SWM")
+# 
+# mean_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
+# sd_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
+# df_FTM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
+# colnames(df_FTM) <- c("Mean_FTM","SD_FTM")
+# 
+# mean_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
+# sd_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
+# df_STM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
+# colnames(df_STM) <- c("Mean_STM","SD_STM")
+# 
+# df_monsoon <- cbind(df_NEM,df_SWM,df_FTM,df_STM)
+# row.names(df_monsoon) <- colnames(SWM[c(-1,-2,-21,-22,-23,-24,-25)])
 
-mean_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-sd_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-df_SWM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-colnames(df_SWM) <- c("Mean_SWM","SD_SWM")
-
-mean_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-sd_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-df_FTM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-colnames(df_FTM) <- c("Mean_FTM","SD_FTM")
-
-mean_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-sd_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-df_STM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-colnames(df_STM) <- c("Mean_STM","SD_STM")
-
-df_monsoon <- cbind(df_NEM,df_SWM,df_FTM,df_STM)
-row.names(df_monsoon) <- colnames(SWM[c(-1,-2,-21,-22,-23,-24,-25)])
-
-#Corelation monsoon 
+# Corelation monsoon 
+corPlot(df_merge_month)
 corPlot(NEM) #PRAIN, PPFD
 corPlot(SWM) #RG,SH
 corPlot(FTM) #PPFD, RN
@@ -202,6 +227,9 @@ abline(lm(STM$FCO2~STM$P_RAIN,data = STM), col = "red")
 
 plot(STM$RG, STM$FCO2, xlab= 'Global Radiation', ylab='CO2 Flux')
 abline(lm(STM$FCO2~STM$RG,data = STM), col = "red")
+
+plot(SWM$PPFD, SWM$FCO2, xlab= 'PPFD', ylab='CO2 Flux', main="SWM")
+abline(lm(SWM$FCO2~SWM$PPFD,data = SWM), col = "red")
 
 #write.table(df_merge_month,file = "monthly_data.csv", sep = ",",row.names = FALSE )
 
@@ -973,11 +1001,11 @@ sd_df_1 <- rbind(sapply(sapply(date_2016[c(3,4,5,7,11,15,17,18,20)],na.omit), sd
                  sapply(sapply(date_2018[c(3,4,5,7,11,15,17,18,20)],na.omit), sd),
                  sapply(sapply(date_2019[c(3,4,5,7,11,15,17,18,20)],na.omit), sd),
                  sapply(sapply(date_2020[c(3,4,5,7,11,15,17,18,20)],na.omit), sd))
-date_2016 <- selectByDate(df1, year = 2016)
-date_2017 <- selectByDate(df1, year = 2017)
-date_2018 <- selectByDate(df1, year = 2018)
-date_2019 <- selectByDate(df1, year = 2019)
-date_2020 <- selectByDate(df1, year = 2020)
+date_2016 <- selectByDate(df_sat, year = 2016)
+date_2017 <- selectByDate(df_sat, year = 2017)
+date_2018 <- selectByDate(df_sat, year = 2018)
+date_2019 <- selectByDate(df_sat, year = 2019)
+date_2020 <- selectByDate(df_sat, year = 2020)
 sd_df_2 <- rbind(sapply(sapply(date_2016[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2017[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2018[c(4,5,8)],na.omit), sd),
