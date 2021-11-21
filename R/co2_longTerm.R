@@ -56,7 +56,7 @@ df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
 
 #### EC DATA ANALYSIS ####
 
-### import EC data######
+### import EC data ######
 df_ec<-read.csv('data/station/MCO-MUKA21_full_output.csv')
 df_biomet<- read.csv('data/station/biomet data 21.csv')
 
@@ -142,7 +142,7 @@ df$H[which(df$H_QC == 2)] <- NA
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
 
 
-#### atmospheric stability values#####
+#### atmospheric stability values #####
 
 unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
 neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]   #neutral, previously z
@@ -166,36 +166,16 @@ df_merge_month$TS[df_merge_month$TS > 34] <- NA
 
 rm(df_biomet, df_ec)
 
-#### partitioning monsoon analysis ####
+#### MONTHLY TIME SCALE - Partitioning monsoon & analysis ####
 
 NEM <- selectByDate(df_merge_month, month = c(12,1,2,3))
 SWM <- selectByDate(df_merge_month, month = c(6,7,8,9))
 FTM <- selectByDate(df_merge_month, month = c(10,11))
 STM <- selectByDate(df_merge_month, month = c(4,5))
 
-# # Mean and SD for each monsoon
-# mean_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-# sd_1 <- sapply(na.omit(NEM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-# df_NEM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-# colnames(df_NEM) <- c("Mean_NEM","SD_NEM")
-# 
-# mean_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-# sd_1 <- sapply(na.omit(SWM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-# df_SWM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-# colnames(df_SWM) <- c("Mean_SWM","SD_SWM")
-# 
-# mean_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-# sd_1 <- sapply(na.omit(FTM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-# df_FTM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-# colnames(df_FTM) <- c("Mean_FTM","SD_FTM")
-# 
-# mean_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), mean)
-# sd_1 <- sapply(na.omit(STM[c(-1,-2,-21,-22,-23,-24,-25)]), sd)
-# df_STM <- data.frame(matrix(c(mean_1,sd_1),ncol = 2))
-# colnames(df_STM) <- c("Mean_STM","SD_STM")
-# 
-# df_monsoon <- cbind(df_NEM,df_SWM,df_FTM,df_STM)
-# row.names(df_monsoon) <- colnames(SWM[c(-1,-2,-21,-22,-23,-24,-25)])
+# creating wind rose
+windRose(NEM, ws="WS",wd='WD', paddle = F)
+windRose(SWM, ws="WS",wd='WD', paddle = F)
 
 # Corelation monsoon 
 corPlot(df_merge_month)
@@ -204,168 +184,75 @@ corPlot(SWM) #RG,SH
 corPlot(FTM) #PPFD, RN
 corPlot(STM) #PRAIN,RG
 
-plot(NEM$P_RAIN, NEM$FCO2, xlab= 'Preciptation', ylab='CO2 Flux')
+plot(NEM$P_RAIN, NEM$FCO2, xlab= 'Rain', ylab='CO2 Flux', 
+     main ='NEM')
 abline(lm(NEM$FCO2~NEM$P_RAIN,data = NEM), col = "red")
 
-plot(NEM$PPFD, NEM$FCO2, xlab= 'Photosynthesis', ylab='CO2 Flux')
+plot(NEM$PPFD, NEM$FCO2, xlab= 'PPFD', ylab='CO2 Flux', 
+     main ='NEM')
 abline(lm(NEM$FCO2~NEM$PPFD,data = NEM), col = "red")
 
-plot(SWM$RG, SWM$FCO2, xlab= 'Radiation', ylab='CO2 Flux')
-abline(lm(SWM$FCO2~SWM$RG,data = SWM), col = "red")
-
-plot(SWM$SH, SWM$FCO2, xlab= 'H strgh', ylab='CO2 Flux')
-abline(lm(SWM$FCO2~SWM$SH,data = SWM), col = "red")
-
-plot(FTM$PPFD, FTM$FCO2, xlab= 'Photosynthesis', ylab='CO2 Flux')
-abline(lm(FTM$FCO2~FTM$PPFD,data = FTM), col = "red")
-
-plot(FTM$RN, FTM$FCO2, xlab= 'Net Radiation', ylab='CO2 Flux')
-abline(lm(FTM$FCO2~FTM$RN,data = FTM), col = "red")
-
-plot(STM$P_RAIN, STM$FCO2, xlab= 'Precipitation', ylab='CO2 Flux')
+plot(STM$P_RAIN, STM$FCO2, xlab= 'Rain', ylab='CO2 Flux', 
+     main ='STM')
 abline(lm(STM$FCO2~STM$P_RAIN,data = STM), col = "red")
 
-plot(STM$RG, STM$FCO2, xlab= 'Global Radiation', ylab='CO2 Flux')
+plot(STM$RG, STM$FCO2, xlab= 'Global Radiation', ylab='CO2 Flux', 
+     main ='STM')
 abline(lm(STM$FCO2~STM$RG,data = STM), col = "red")
+
+plot(SWM$RG, SWM$FCO2, xlab= 'Global Radiation', ylab='CO2 Flux', 
+     main ='SWM')
+abline(lm(SWM$FCO2~SWM$RG,data = SWM), col = "red")
 
 plot(SWM$PPFD, SWM$FCO2, xlab= 'PPFD', ylab='CO2 Flux', main="SWM")
 abline(lm(SWM$FCO2~SWM$PPFD,data = SWM), col = "red")
 
-#write.table(df_merge_month,file = "monthly_data.csv", sep = ",",row.names = FALSE )
+plot(FTM$PPFD, FTM$FCO2, xlab= 'PPFD', ylab='CO2 Flux', 
+     main ='FTM')
+abline(lm(FTM$FCO2~FTM$PPFD,data = FTM), col = "red")
 
-#write.table(df_merge_year,file = "yearly_data.csv", sep = ",",row.names = FALSE )
+plot(FTM$RN, FTM$FCO2, xlab= 'Net Radiation', ylab='CO2 Flux',
+     main ='FTM')
+abline(lm(FTM$FCO2~FTM$RN,data = FTM), col = "red")
 
 
-#partition stable and unstable dataset          
-df_merge_month_unstable <- subset(df_merge_month,df_merge_month$ZL < 0) #convection
-df_merge_month_unstable <- data.frame(df_merge_month_unstable,abs(df_merge_month_unstable$ZL))# convert all negative values to +ve to make logarithmic plot
-colnames(df_merge_month_unstable)[29] <-'abs_zL'
 
+# partition stable and unstable dataset          
+df_merge_month_unstable <- subset(df_merge_month,df_merge_month$ZL < 0) # convection
+df_merge_month_unstable <- data.frame(df_merge_month_unstable,
+                                      abs(df_merge_month_unstable$ZL)) # convert all negative values to +ve to make logarithmic plot
+colnames(df_merge_month_unstable)[31] <-'abs_zL'
 df_merge_month_stable <- subset(df_merge_month, df_merge_month$ZL>=0)
-#partitioning co2 positive and -ve values
+
+# partitioning co2 positive and -ve values
 CO2_positive <- subset(df_merge_month,df_merge_month$FCO2 > 0)
 CO2_negative <- subset(df_merge_month,df_merge_month$FCO2 < 0)
 
 
 
-
-
-##################################################################################
-#plotting co2
-plot(log(CO2_positive$WS), log(CO2_positive$FCO2), xlab= 'Wind Speed', ylab='CO2 Flux')
-lmEB<- lm(CO2_positive$WS ~ CO2_positive$FCO2,data=CO2_positive)
+# Plotting CO2 
+plot(log(df_merge_month$WS), df_merge_month$FCO2, 
+     xlab= 'Wind Speed', ylab='CO2 Flux')
+lmEB <- lm(df_merge_month$FCO2 ~ log(df_merge_month$WS))
+abline(lmEB, col='red')
 summary(lmEB)
+rm(lmEB)
 # Check the correlated or no? To check the correlation test (Pearson Coreelation) 
-cor.test(CO2_positive$WS,CO2_positive$FCO2) #pvalue 0.06 no corelation
-cor.test(CO2_positive$TA,CO2_positive$FCO2) #pvalue 0.01 got corelation
-cor.test(CO2_positive$SST,CO2_positive$FCO2) #p-value 0.75 no corelation
-cor.test(CO2_positive$ZL,CO2_positive$FCO2) # p-value 0.76 no corelation
-cor.test(CO2_positive$PAR,CO2_positive$FCO2) #p-value 0.8727 no corelation
-corPlot(CO2_positive)
+cor.test(log(df_merge_month$WS), df_merge_month$FCO2)
 
-
-cor.test(df_merge_month$ET,df_merge_month$FCO2) #p-value = 9.162e-08 got correlation
-cor.test(df_merge_month$LE,df_merge_month$FCO2) #p-value = 1.97e-07 got correlation
-corPlot((df_merge_month)) #this one can show Dr
-
-
-
-#Daily corelation
-df_day<- timeAverage(df, avg.time = "1 day")
-cor.test(df_day$FCO2,df_day$WS)
-#30 min corelation
-cor.test(df$FCO2,df$WS)
-
-#creating windRose
-library(openair)
-windRose(NEM, ws="WS",wd='WD')
-windRose(SWM, ws="WS",wd='WD')
+# plot(CO2_positive$WS,CO2_positive$FCO2)
+# plot(CO2_negative$WS,CO2_negative$FCO2)
+# cor.test(CO2_positive$WS,CO2_positive$FCO2) #p-value 0.06 no corelation
+# cor.test(CO2_positive$TA,CO2_positive$FCO2) #p-value 0.01 got corelation
+# cor.test(CO2_positive$SST,CO2_positive$FCO2) #p-value 0.75 no corelation
+# cor.test(CO2_positive$ZL,CO2_positive$FCO2) #p-value 0.76 no corelation
+# cor.test(CO2_positive$PAR,CO2_positive$FCO2) #p-value 0.8727 no corelation
+# corPlot(CO2_positive)
 
 
 
 
-
-#DATA ANALYSIS
-#Time series
-#FCO2
-# jpeg(filename='fig/Fco2_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$FCO2, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")))
-# dev.off()
-# 
-# 
-# jpeg(filename='fig/Rain_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$P_RAIN, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('Cumulative', "", 'rian (','m','m',')' ,sep = "")))
-# dev.off()
-# 
-# jpeg(filename='fig/PPFD_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$PPFD, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('PPDF (','µ','molC','','m'^{'-2'}, 's'^{'-1'},')',sep = "")))
-# dev.off()
-# 
-# 
-# jpeg(filename='fig/TA_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$TA, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('TA (','C'^{O},')',sep = "")))
-#    
-# dev.off()
-# 
-# 
-# 
-# jpeg(filename='fig/LE_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$LE, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('LE(','W','m'^{'-2'},')',sep = "")))
-# 
-# dev.off()
-# 
-# 
-# jpeg(filename='fig/H_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$H, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('H(','W','m'^{'-2'},')',sep = "")))
-# 
-# dev.off()
-# 
-# 
-# jpeg(filename='fig/RN&RG_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$RG, type = 'p',pch = 19, xlab = 'Time', col='orange',ylim = c(-100,500),
-#      ylab=expression(paste('RN','&','RG (','W','m'^{'-2'},')',sep = "")))
-# lines(df_merge_month$date,df_merge_month$RG,col = 'orange')
-# lines(df_merge_month$date,df_merge_month$RN,col='red')
-# points(df_merge_month$date,df_merge_month$RN,col='red', pch = 19)
-# dev.off() 
-# 
-# jpeg(filename='fig/USTAR.jpg', unit = 'cm', width = 12, height = 10, res = 360)
-# par (mar = c(4,5,1,1))  #TIME SERIES
-# plot(df_merge_month$date,df_merge_month$USTAR, type = 'l', xlab = 'Time', 
-#      ylab=expression(paste('U*(','m'^{'1'},'s'^{'-1'},')',sep = "")))
-# 
-# dev.off()
-
-
-#plot(df_merge_month$date,df_merge_month$H, type = 'l', xlab = 'Time',  
-#     ylab='Sensible Heat (Wm')
-
-#plot(SWM$date,SWM$LE,  type = 'l', xlab = 'Time', 
-#     ylab='Sensible Heat (Wm')
-
-
-
-#df_merge_month$H[which(df_merge_month$H < -1 | df_merge_month$H > 2 )] <- NA
-#library(openair)
-#NEM_date <- selectByDate(df_merge_month, month = c(12))[,1]
-#SWM_date <- selectByDate(df_merge_month, month = c(6))[,1]
-#FTM_date <- selectByDate(df_merge_month, month = c(10))[,1]
-#STM_date <- selectByDate(df_merge_month, month = c(4))[,1]
-
-library(openair)
+#### PLOT - FCO2 monthly trends ####
 FCO2_2015 <- selectByDate(df_merge_month, year = 2015)[,c(1,5)]
 FCO2_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,5)]
 FCO2_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,5)]
@@ -391,9 +278,13 @@ points(FCO2_2019$date,FCO2_2019$FCO2, pch = 19, col = "Purple")
 lines(FCO2_2019$date,FCO2_2019$FCO2, pch = 19, col = "Purple")
 points(FCO2_2020$date,FCO2_2020$FCO2, pch = 19, col = "Black")
 lines(FCO2_2020$date,FCO2_2020$FCO2, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
+axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", 
+                                        "Apr", "May", "Jun", 
+                                        "Jul", "Aug", "Sep", 
+                                        "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
 #mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), side = 2, line = 2)
+mtext(expression(paste('CO'['2'],' flux (','mol C',' ','m'^{'-2'}, 
+                       ' ', 'yr'^{'-1'},')',sep = "")), side = 2, line = 2)
 legend_order <- c(2016:2020)
 legend_colour<-c( "Red","Orange","Blue","Purple","Black")
 legend("topleft", legend = legend_order, bty = "n",
@@ -401,24 +292,9 @@ legend("topleft", legend = legend_order, bty = "n",
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-#windowsFonts("Times New Roman"=windowsFont("TT Times New Roman")) 
-#FCO2
-jpeg(filename='fig/FCO2_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$FCO2, type = 'l', xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$FCO2, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
 
-####CHL####
+
+#### BIO CONTROL PLOT - CHL monthly trends ####
 CHL_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,26)]
 CHL_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,26)]
 CHL_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,26)]
@@ -467,252 +343,35 @@ mtext(expression(paste('Chlorophyll', sep = "")), side = 2, line = 2)
 #legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
 dev.off()
 
-####WD####
-WD_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,4)]
-WD_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,4)]
-WD_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,4)]
-WD_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,4)]
-WD_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,4)]
-WD_2016$date <- format(as.POSIXct(WD_2016$date),"%m")
-WD_2017$date <- format(as.POSIXct(WD_2017$date),"%m")
-WD_2018$date <- format(as.POSIXct(WD_2018$date),"%m")
-WD_2019$date <- format(as.POSIXct(WD_2019$date),"%m")
-WD_2020$date <- format(as.POSIXct(WD_2020$date),"%m")
+#### BIO CONTROL PLOT - PPFD monthly trends ####
+PPFD_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,17)]
+PPFD_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,17)]
+PPFD_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,17)]
+PPFD_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,17)]
+PPFD_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,17)]
+PPFD_2016$date <- format(as.POSIXct(PPFD_2016$date),"%m")
+PPFD_2017$date <- format(as.POSIXct(PPFD_2017$date),"%m")
+PPFD_2018$date <- format(as.POSIXct(PPFD_2018$date),"%m")
+PPFD_2019$date <- format(as.POSIXct(PPFD_2019$date),"%m")
+PPFD_2020$date <- format(as.POSIXct(PPFD_2020$date),"%m")
 
-jpeg(filename='fig/WD_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+jpeg(filename='fig/PPFD_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
-plot(WD_2016$date, WD_2016$WD, type = 'l', xlab = '',ylim = c(140, 260), ylab = '', col = "Red", xaxt = "n")
-points(WD_2016$date,WD_2016$WD, pch = 19, col = "Red")
-points(WD_2017$date,WD_2017$WD, pch = 19, col = "Orange")
-lines(WD_2017$date,WD_2017$WD, pch = 19, col = "Orange")
-points(WD_2018$date,WD_2018$WD, pch = 19, col = "Blue")
-lines(WD_2018$date,WD_2018$WD, pch = 19, col = "Blue")
-points(WD_2019$date,WD_2019$WD, pch = 19, col = "Purple")
-lines(WD_2019$date,WD_2019$WD, pch = 19, col = "Purple")
-points(WD_2020$date,WD_2020$WD, pch = 19, col = "Black")
-lines(WD_2020$date,WD_2020$WD, pch = 19, col = "Black")
+plot(PPFD_2016$date, PPFD_2019$PPFD, type = 'l', xlab = '',ylim = c(250,520), ylab = '',col = "Red", xaxt = "n")
+points(PPFD_2019$date,PPFD_2019$PPFD, pch = 19, col = "Purple")
+points(PPFD_2020$date,PPFD_2020$PPFD, pch = 19, col = "Black")
+lines(PPFD_2020$date,PPFD_2020$PPFD, pch = 19, col = "Black")
 axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
 #mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('Wind Direction (','degree '^'o','North', ')', sep = "")), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c( "Red","Orange","Blue","Purple","Black")
+mtext(expression(paste('PPFD')), side = 2, line = 2)
+legend_order <- c(2019:2020)
+legend_colour<-c( "Purple","Black")
 legend("topleft", legend = legend_order, bty = "n",
        col = legend_colour, pch=19, ncol = 2)
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-jpeg(filename='fig/WD_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$WD, type = 'l', xlab = '', ylab = '', ylim = c(140,240))
-points(df_merge_month$date,df_merge_month$WD, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('Wind Direction (','degree '^'o','North', ')', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####WS####
-WS_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,3)]
-WS_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,3)]
-WS_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,3)]
-WS_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,3)]
-WS_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,3)]
-WS_2016$date <- format(as.POSIXct(WS_2016$date),"%m")
-WS_2017$date <- format(as.POSIXct(WS_2017$date),"%m")
-WS_2018$date <- format(as.POSIXct(WS_2018$date),"%m")
-WS_2019$date <- format(as.POSIXct(WS_2019$date),"%m")
-WS_2020$date <- format(as.POSIXct(WS_2020$date),"%m")
-
-jpeg(filename='fig/WS_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar=c(4,4,1,1),xpd=FALSE)
-plot(WS_2016$date, WS_2016$WS, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(0.2,1.2))
-points(WS_2016$date,WS_2016$WS, pch = 19, col = "Red")
-points(WS_2017$date,WS_2017$WS, pch = 19, col = "Orange")
-lines(WS_2017$date,WS_2017$WS, pch = 19, col = "Orange")
-points(WS_2018$date,WS_2018$WS, pch = 19, col = "Blue")
-lines(WS_2018$date,WS_2018$WS, pch = 19, col = "Blue")
-points(WS_2019$date,WS_2019$WS, pch = 19, col = "Purple")
-lines(WS_2019$date,WS_2019$WS, pch = 19, col = "Purple")
-points(WS_2020$date,WS_2020$WS, pch = 19, col = "Black")
-lines(WS_2020$date,WS_2020$WS, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
-#mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c("Red","Orange","Blue","Purple","Black")
-legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
-#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
-dev.off()
-
-jpeg(filename='fig/WS_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$WS, type = 'l',ylim = c(0.2,1.0), xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$WS, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####TA####
-TA_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,15)]
-TA_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,15)]
-TA_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,15)]
-TA_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,15)]
-TA_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,15)]
-TA_2016$date <- format(as.POSIXct(TA_2016$date),"%m")
-TA_2017$date <- format(as.POSIXct(TA_2017$date),"%m")
-TA_2018$date <- format(as.POSIXct(TA_2018$date),"%m")
-TA_2019$date <- format(as.POSIXct(TA_2019$date),"%m")
-TA_2020$date <- format(as.POSIXct(TA_2020$date),"%m")
-
-jpeg(filename='fig/TA_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar=c(4,4,1,1),xpd=FALSE)
-plot(TA_2016$date, TA_2016$TA, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(26,32))
-points(TA_2016$date,TA_2016$TA, pch = 19, col = "Red")
-points(TA_2017$date,TA_2017$TA, pch = 19, col = "Orange")
-lines(TA_2017$date,TA_2017$TA, pch = 19, col = "Orange")
-points(TA_2018$date,TA_2018$TA, pch = 19, col = "Blue")
-lines(TA_2018$date,TA_2018$TA, pch = 19, col = "Blue")
-points(TA_2019$date,TA_2019$TA, pch = 19, col = "Purple")
-lines(TA_2019$date,TA_2019$TA, pch = 19, col = "Purple")
-points(TA_2020$date,TA_2020$TA, pch = 19, col = "Black")
-lines(TA_2020$date,TA_2020$TA, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
-#mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c("Red","Orange","Blue","Purple","Black")
-legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
-#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
-dev.off()
-
-jpeg(filename='fig/TA_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$TA, type = 'l', xlab = '', ylab = '', ylim = c(26,31))
-points(df_merge_month$date,df_merge_month$TA, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####TS####
-TS_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,20)]
-TS_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,20)]
-TS_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,20)]
-TS_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,20)]
-TS_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,20)]
-TS_2016$date <- format(as.POSIXct(TS_2016$date),"%m")
-TS_2017$date <- format(as.POSIXct(TS_2017$date),"%m")
-TS_2018$date <- format(as.POSIXct(TS_2018$date),"%m")
-TS_2019$date <- format(as.POSIXct(TS_2019$date),"%m")
-TS_2020$date <- format(as.POSIXct(TS_2020$date),"%m")
-
-jpeg(filename='fig/TS_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar=c(4,4,1,1),xpd=FALSE)
-plot(TS_2016$date, TS_2016$TS, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(27,35))
-points(TS_2016$date,TS_2016$TS, pch = 19, col = "Red")
-points(TS_2017$date,TS_2017$TS, pch = 19, col = "Orange")
-lines(TS_2017$date,TS_2017$TS, pch = 19, col = "Orange")
-points(TS_2018$date,TS_2018$TS, pch = 19, col = "Blue")
-lines(TS_2018$date,TS_2018$TS, pch = 19, col = "Blue")
-points(TS_2019$date,TS_2019$TS, pch = 19, col = "Purple")
-lines(TS_2019$date,TS_2019$TS, pch = 19, col = "Purple")
-points(TS_2020$date,TS_2020$TS, pch = 19, col = "Black")
-lines(TS_2020$date,TS_2020$TS, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
-#mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c( "Red","Orange","Blue","Purple","Black")
-legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
-#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
-dev.off()
-
-jpeg(filename='fig/TS_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$TS, type = 'l', xlab = '', ylab = '', ylim = c(27,33))
-points(df_merge_month$date,df_merge_month$TS, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####SST####
-SST_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,27)]
-SST_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,27)]
-SST_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,27)]
-SST_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,27)]
-SST_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,27)]
-SST_2016$date <- format(as.POSIXct(SST_2016$date),"%m")
-SST_2017$date <- format(as.POSIXct(SST_2017$date),"%m")
-SST_2018$date <- format(as.POSIXct(SST_2018$date),"%m")
-SST_2019$date <- format(as.POSIXct(SST_2019$date),"%m")
-SST_2020$date <- format(as.POSIXct(SST_2020$date),"%m")
-
-jpeg(filename='fig/SST_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar=c(4,4,1,1),xpd=FALSE)
-plot(SST_2016$date, SST_2016$SST, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(28,34))
-points(SST_2016$date,SST_2016$SST, pch = 19, col = "Red")
-points(SST_2017$date,SST_2017$SST, pch = 19, col = "Orange")
-lines(SST_2017$date,SST_2017$SST, pch = 19, col = "Orange")
-points(SST_2018$date,SST_2018$SST, pch = 19, col = "Blue")
-lines(SST_2018$date,SST_2018$SST, pch = 19, col = "Blue")
-points(SST_2019$date,SST_2019$SST, pch = 19, col = "Purple")
-lines(SST_2019$date,SST_2019$SST, pch = 19, col = "Purple")
-points(SST_2020$date,SST_2020$SST, pch = 19, col = "Black")
-lines(SST_2020$date,SST_2020$SST, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
-#mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('SST (','C'^'o', ')', sep = "")), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c( "Red","Orange","Blue","Purple","Black")
-legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
-#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
-dev.off()
-
-jpeg(filename='fig/SST_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$SST, type = 'l', xlab = '', ylab = '', ylim = c(28,33))
-points(df_merge_month$date,df_merge_month$SST, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('SST (','C'^'o', ')', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####PAR####
+#### BIO CONTROL PLOT - PAR monthly trends ####
 PAR_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,30)]
 PAR_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,30)]
 PAR_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,30)]
@@ -746,249 +405,292 @@ legend("topleft", legend = legend_order, bty = "n",
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-jpeg(filename='fig/PAR_all_years2.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$PAR, type = 'l', xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$PAR, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('PAR Radiation', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
+plot(df_merge_month$PAR,df_merge_month$PPFD)
+cor.test(df_merge_month$PAR,df_merge_month$PPFD)
 
-####PPFD####
-PPFD_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,17)]
-PPFD_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,17)]
-PPFD_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,17)]
-PPFD_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,17)]
-PPFD_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,17)]
-PPFD_2016$date <- format(as.POSIXct(PPFD_2016$date),"%m")
-PPFD_2017$date <- format(as.POSIXct(PPFD_2017$date),"%m")
-PPFD_2018$date <- format(as.POSIXct(PPFD_2018$date),"%m")
-PPFD_2019$date <- format(as.POSIXct(PPFD_2019$date),"%m")
-PPFD_2020$date <- format(as.POSIXct(PPFD_2020$date),"%m")
+#### PYHSICAL CONTROL PLOT - WS monthly trends ####
+WS_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,3)]
+WS_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,3)]
+WS_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,3)]
+WS_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,3)]
+WS_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,3)]
+WS_2016$date <- format(as.POSIXct(WS_2016$date),"%m")
+WS_2017$date <- format(as.POSIXct(WS_2017$date),"%m")
+WS_2018$date <- format(as.POSIXct(WS_2018$date),"%m")
+WS_2019$date <- format(as.POSIXct(WS_2019$date),"%m")
+WS_2020$date <- format(as.POSIXct(WS_2020$date),"%m")
 
-jpeg(filename='fig/PPFD_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+jpeg(filename='fig/WS_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
-plot(PPFD_2016$date, PPFD_2019$PPFD, type = 'l', xlab = '',ylim = c(250,520), ylab = '',col = "Red", xaxt = "n")
-points(PPFD_2019$date,PPFD_2019$PPFD, pch = 19, col = "Purple")
-points(PPFD_2020$date,PPFD_2020$PPFD, pch = 19, col = "Black")
-lines(PPFD_2020$date,PPFD_2020$PPFD, pch = 19, col = "Black")
+plot(WS_2016$date, WS_2016$WS, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(0.2,1.2))
+points(WS_2016$date,WS_2016$WS, pch = 19, col = "Red")
+points(WS_2017$date,WS_2017$WS, pch = 19, col = "Orange")
+lines(WS_2017$date,WS_2017$WS, pch = 19, col = "Orange")
+points(WS_2018$date,WS_2018$WS, pch = 19, col = "Blue")
+lines(WS_2018$date,WS_2018$WS, pch = 19, col = "Blue")
+points(WS_2019$date,WS_2019$WS, pch = 19, col = "Purple")
+lines(WS_2019$date,WS_2019$WS, pch = 19, col = "Purple")
+points(WS_2020$date,WS_2020$WS, pch = 19, col = "Black")
+lines(WS_2020$date,WS_2020$WS, pch = 19, col = "Black")
 axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
 #mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('PPFD')), side = 2, line = 2)
-legend_order <- c(2019:2020)
-legend_colour<-c( "Purple","Black")
+mtext(expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")), side = 2, line = 2)
+legend_order <- c(2016:2020)
+legend_colour<-c("Red","Orange","Blue","Purple","Black")
 legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, ncol = 2)
+       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-jpeg(filename='fig/PPFD_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$PPFD, type = 'l', xlab = '', ylab = '', xlim = c(as.POSIXct("2019-01-01 00:00:00"),as.POSIXct("2020-12-31 00:00:00")))
-points(df_merge_month$date,df_merge_month$PPFD, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('PPFD', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
+
+#### PYHSICAL CONTROL PLOT - TA monthly trends ####
+TA_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,15)]
+TA_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,15)]
+TA_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,15)]
+TA_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,15)]
+TA_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,15)]
+TA_2016$date <- format(as.POSIXct(TA_2016$date),"%m")
+TA_2017$date <- format(as.POSIXct(TA_2017$date),"%m")
+TA_2018$date <- format(as.POSIXct(TA_2018$date),"%m")
+TA_2019$date <- format(as.POSIXct(TA_2019$date),"%m")
+TA_2020$date <- format(as.POSIXct(TA_2020$date),"%m")
+
+jpeg(filename='fig/TA_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+par(mar=c(4,4,1,1),xpd=FALSE)
+plot(TA_2016$date, TA_2016$TA, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(26,32))
+points(TA_2016$date,TA_2016$TA, pch = 19, col = "Red")
+points(TA_2017$date,TA_2017$TA, pch = 19, col = "Orange")
+lines(TA_2017$date,TA_2017$TA, pch = 19, col = "Orange")
+points(TA_2018$date,TA_2018$TA, pch = 19, col = "Blue")
+lines(TA_2018$date,TA_2018$TA, pch = 19, col = "Blue")
+points(TA_2019$date,TA_2019$TA, pch = 19, col = "Purple")
+lines(TA_2019$date,TA_2019$TA, pch = 19, col = "Purple")
+points(TA_2020$date,TA_2020$TA, pch = 19, col = "Black")
+lines(TA_2020$date,TA_2020$TA, pch = 19, col = "Black")
+axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
+#mtext('Months', side = 1, line = 2.5)
+mtext(expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
+legend_order <- c(2016:2020)
+legend_colour<-c("Red","Orange","Blue","Purple","Black")
+legend("topleft", legend = legend_order, bty = "n",
+       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
+#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
 
-####USTAR####
-USTAR_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,18)]
-USTAR_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,18)]
-USTAR_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,18)]
-USTAR_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,18)]
-USTAR_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,18)]
-USTAR_2016$date <- format(as.POSIXct(USTAR_2016$date),"%m")
-USTAR_2017$date <- format(as.POSIXct(USTAR_2017$date),"%m")
-USTAR_2018$date <- format(as.POSIXct(USTAR_2018$date),"%m")
-USTAR_2019$date <- format(as.POSIXct(USTAR_2019$date),"%m")
-USTAR_2020$date <- format(as.POSIXct(USTAR_2020$date),"%m")
 
-jpeg(filename='fig/USTAR_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+#### PHYSICAL CONTROL PLOT - TS monthly trends ####
+TS_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,20)]
+TS_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,20)]
+TS_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,20)]
+TS_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,20)]
+TS_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,20)]
+TS_2016$date <- format(as.POSIXct(TS_2016$date),"%m")
+TS_2017$date <- format(as.POSIXct(TS_2017$date),"%m")
+TS_2018$date <- format(as.POSIXct(TS_2018$date),"%m")
+TS_2019$date <- format(as.POSIXct(TS_2019$date),"%m")
+TS_2020$date <- format(as.POSIXct(TS_2020$date),"%m")
+
+jpeg(filename='fig/TS_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
-plot(USTAR_2016$date, USTAR_2016$USTAR, type = 'l', xlab = '', ylab = '', ylim =c(0.033,0.055) ,col = "Red", xaxt = "n")
-points(USTAR_2016$date,USTAR_2016$USTAR, pch = 19, col = "Red")
-points(USTAR_2017$date,USTAR_2017$USTAR, pch = 19, col = "Orange")
-lines(USTAR_2017$date,USTAR_2017$USTAR, pch = 19, col = "Orange")
-points(USTAR_2018$date,USTAR_2018$USTAR, pch = 19, col = "Blue")
-lines(USTAR_2018$date,USTAR_2018$USTAR, pch = 19, col = "Blue")
-points(USTAR_2019$date,USTAR_2019$USTAR, pch = 19, col = "Purple")
-lines(USTAR_2019$date,USTAR_2019$USTAR, pch = 19, col = "Purple")
-points(USTAR_2020$date,USTAR_2020$USTAR, pch = 19, col = "Black")
-lines(USTAR_2020$date,USTAR_2020$USTAR, pch = 19, col = "Black")
+plot(TS_2016$date, TS_2016$TS, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(27,35))
+points(TS_2016$date,TS_2016$TS, pch = 19, col = "Red")
+points(TS_2017$date,TS_2017$TS, pch = 19, col = "Orange")
+lines(TS_2017$date,TS_2017$TS, pch = 19, col = "Orange")
+points(TS_2018$date,TS_2018$TS, pch = 19, col = "Blue")
+lines(TS_2018$date,TS_2018$TS, pch = 19, col = "Blue")
+points(TS_2019$date,TS_2019$TS, pch = 19, col = "Purple")
+lines(TS_2019$date,TS_2019$TS, pch = 19, col = "Purple")
+points(TS_2020$date,TS_2020$TS, pch = 19, col = "Black")
+lines(TS_2020$date,TS_2020$TS, pch = 19, col = "Black")
 axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
 #mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('USTAR')), side = 2, line = 2)
+mtext(expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")), side = 2, line = 2)
 legend_order <- c(2016:2020)
 legend_colour<-c( "Red","Orange","Blue","Purple","Black")
 legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, ncol = 2)
+       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-jpeg(filename='fig/USTAR_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$USTAR, type = 'l', xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$USTAR, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('USTAR', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
 
-####RH####
-RH_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,7)]
-RH_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,7)]
-RH_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,7)]
-RH_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,7)]
-RH_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,7)]
-RH_2016$date <- format(as.POSIXct(RH_2016$date),"%m")
-RH_2017$date <- format(as.POSIXct(RH_2017$date),"%m")
-RH_2018$date <- format(as.POSIXct(RH_2018$date),"%m")
-RH_2019$date <- format(as.POSIXct(RH_2019$date),"%m")
-RH_2020$date <- format(as.POSIXct(RH_2020$date),"%m")
+#### PHYSICAL CONTROL PLOT - SST monthly trends ####
+SST_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,27)]
+SST_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,27)]
+SST_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,27)]
+SST_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,27)]
+SST_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,27)]
+SST_2016$date <- format(as.POSIXct(SST_2016$date),"%m")
+SST_2017$date <- format(as.POSIXct(SST_2017$date),"%m")
+SST_2018$date <- format(as.POSIXct(SST_2018$date),"%m")
+SST_2019$date <- format(as.POSIXct(SST_2019$date),"%m")
+SST_2020$date <- format(as.POSIXct(SST_2020$date),"%m")
 
-jpeg(filename='fig/RH_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+jpeg(filename='fig/SST_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
-plot(RH_2016$date, RH_2016$RH, type = 'l', xlab = '', ylab = '', ylim =c(65,105) ,col = "Red", xaxt = "n")
-points(RH_2016$date,RH_2016$RH, pch = 19, col = "Red")
-points(RH_2017$date,RH_2017$RH, pch = 19, col = "Orange")
-lines(RH_2017$date,RH_2017$RH, pch = 19, col = "Orange")
-points(RH_2018$date,RH_2018$RH, pch = 19, col = "Blue")
-lines(RH_2018$date,RH_2018$RH, pch = 19, col = "Blue")
-points(RH_2019$date,RH_2019$RH, pch = 19, col = "Purple")
-lines(RH_2019$date,RH_2019$RH, pch = 19, col = "Purple")
-points(RH_2020$date,RH_2020$RH, pch = 19, col = "Black")
-lines(RH_2020$date,RH_2020$RH, pch = 19, col = "Black")
+plot(SST_2016$date, SST_2016$SST, type = 'l', xlab = '', ylab = '', col = "Red", xaxt = "n", ylim = c(28,34))
+points(SST_2016$date,SST_2016$SST, pch = 19, col = "Red")
+points(SST_2017$date,SST_2017$SST, pch = 19, col = "Orange")
+lines(SST_2017$date,SST_2017$SST, pch = 19, col = "Orange")
+points(SST_2018$date,SST_2018$SST, pch = 19, col = "Blue")
+lines(SST_2018$date,SST_2018$SST, pch = 19, col = "Blue")
+points(SST_2019$date,SST_2019$SST, pch = 19, col = "Purple")
+lines(SST_2019$date,SST_2019$SST, pch = 19, col = "Purple")
+points(SST_2020$date,SST_2020$SST, pch = 19, col = "Black")
+lines(SST_2020$date,SST_2020$SST, pch = 19, col = "Black")
 axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
 #mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('RH')), side = 2, line = 2)
+mtext(expression(paste('SST (','C'^'o', ')', sep = "")), side = 2, line = 2)
 legend_order <- c(2016:2020)
 legend_colour<-c( "Red","Orange","Blue","Purple","Black")
 legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, ncol = 2)
+       col = legend_colour, pch=19, cex = 0.85, ncol = 2)
 #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
 dev.off()
 
-jpeg(filename='fig/RH_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$RH, type = 'l', xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$RH, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('RH', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
-
-####ZL####
-ZL_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,11)]
-ZL_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,11)]
-ZL_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,11)]
-ZL_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,11)]
-ZL_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,11)]
-ZL_2016$date <- format(as.POSIXct(ZL_2016$date),"%m")
-ZL_2017$date <- format(as.POSIXct(ZL_2017$date),"%m")
-ZL_2018$date <- format(as.POSIXct(ZL_2018$date),"%m")
-ZL_2019$date <- format(as.POSIXct(ZL_2019$date),"%m")
-ZL_2020$date <- format(as.POSIXct(ZL_2020$date),"%m")
-
-jpeg(filename='fig/ZL_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar=c(4,4,1,1),xpd=FALSE)
-plot(ZL_2016$date, ZL_2016$ZL, type = 'l', xlab = '', ylab = '', ylim =c(-2.5,0.0) ,col = "Red", xaxt = "n")
-points(ZL_2016$date,ZL_2016$ZL, pch = 19, col = "Red")
-points(ZL_2017$date,ZL_2017$ZL, pch = 19, col = "Orange")
-lines(ZL_2017$date,ZL_2017$ZL, pch = 19, col = "Orange")
-points(ZL_2018$date,ZL_2018$ZL, pch = 19, col = "Blue")
-lines(ZL_2018$date,ZL_2018$ZL, pch = 19, col = "Blue")
-points(ZL_2019$date,ZL_2019$ZL, pch = 19, col = "Purple")
-lines(ZL_2019$date,ZL_2019$ZL, pch = 19, col = "Purple")
-points(ZL_2020$date,ZL_2020$ZL, pch = 19, col = "Black")
-lines(ZL_2020$date,ZL_2020$ZL, pch = 19, col = "Black")
-axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
-#mtext('Months', side = 1, line = 2.5)
-mtext(expression(paste('ZL')), side = 2, line = 2)
-legend_order <- c(2016:2020)
-legend_colour<-c( "Red","Orange","Blue","Purple","Black")
-legend("topleft", legend = legend_order, bty = "n",
-       col = legend_colour, pch=19, ncol = 2)
-#grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
-dev.off()
-
-jpeg(filename='fig/ZL_all_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par (mar = c(4,4,1,1)
-     #,family = "Times New Roman" 
-)
-plot(df_merge_month$date,df_merge_month$ZL, type = 'l', xlab = '', ylab = '')
-points(df_merge_month$date,df_merge_month$ZL, pch = 19)
-#mtext('Year', side = 1, line = 2)
-mtext(expression(paste('ZL', sep = "")), side = 2, line = 2)
-#abline(v= NEM_date, lty = 2,col = "red" )
-#abline(v= SWM_date, lty = 2, col = "blue")
-#abline(v= FTM_date, lty = 2, col = "blue")
-#abline(v = STM_date, lty = 2, col = "red")
-#legend("bottomright",legend = c("NEM","SWM"), col = c("red","blue"), lty = 2)
-dev.off()
 
 
+# ####  UNUSED PHYSICAL CONTROL PLOT - USTAR monthly trends ####
+# USTAR_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,18)]
+# USTAR_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,18)]
+# USTAR_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,18)]
+# USTAR_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,18)]
+# USTAR_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,18)]
+# USTAR_2016$date <- format(as.POSIXct(USTAR_2016$date),"%m")
+# USTAR_2017$date <- format(as.POSIXct(USTAR_2017$date),"%m")
+# USTAR_2018$date <- format(as.POSIXct(USTAR_2018$date),"%m")
+# USTAR_2019$date <- format(as.POSIXct(USTAR_2019$date),"%m")
+# USTAR_2020$date <- format(as.POSIXct(USTAR_2020$date),"%m")
+# 
+# jpeg(filename='fig/USTAR_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar=c(4,4,1,1),xpd=FALSE)
+# plot(USTAR_2016$date, USTAR_2016$USTAR, type = 'l', xlab = '', ylab = '', ylim =c(0.033,0.055) ,col = "Red", xaxt = "n")
+# points(USTAR_2016$date,USTAR_2016$USTAR, pch = 19, col = "Red")
+# points(USTAR_2017$date,USTAR_2017$USTAR, pch = 19, col = "Orange")
+# lines(USTAR_2017$date,USTAR_2017$USTAR, pch = 19, col = "Orange")
+# points(USTAR_2018$date,USTAR_2018$USTAR, pch = 19, col = "Blue")
+# lines(USTAR_2018$date,USTAR_2018$USTAR, pch = 19, col = "Blue")
+# points(USTAR_2019$date,USTAR_2019$USTAR, pch = 19, col = "Purple")
+# lines(USTAR_2019$date,USTAR_2019$USTAR, pch = 19, col = "Purple")
+# points(USTAR_2020$date,USTAR_2020$USTAR, pch = 19, col = "Black")
+# lines(USTAR_2020$date,USTAR_2020$USTAR, pch = 19, col = "Black")
+# axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
+# #mtext('Months', side = 1, line = 2.5)
+# mtext(expression(paste('USTAR')), side = 2, line = 2)
+# legend_order <- c(2016:2020)
+# legend_colour<-c( "Red","Orange","Blue","Purple","Black")
+# legend("topleft", legend = legend_order, bty = "n",
+#        col = legend_colour, pch=19, ncol = 2)
+# #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
+# dev.off()
+
+# #### UNUSED PHYSICAL CONTROL PLOT - Z/L monthly trends ####
+# ZL_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,11)]
+# ZL_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,11)]
+# ZL_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,11)]
+# ZL_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,11)]
+# ZL_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,11)]
+# ZL_2016$date <- format(as.POSIXct(ZL_2016$date),"%m")
+# ZL_2017$date <- format(as.POSIXct(ZL_2017$date),"%m")
+# ZL_2018$date <- format(as.POSIXct(ZL_2018$date),"%m")
+# ZL_2019$date <- format(as.POSIXct(ZL_2019$date),"%m")
+# ZL_2020$date <- format(as.POSIXct(ZL_2020$date),"%m")
+# 
+# jpeg(filename='fig/ZL_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar=c(4,4,1,1),xpd=FALSE)
+# plot(ZL_2016$date, ZL_2016$ZL, type = 'l', xlab = '', ylab = '', ylim =c(-2.5,0.0) ,col = "Red", xaxt = "n")
+# points(ZL_2016$date,ZL_2016$ZL, pch = 19, col = "Red")
+# points(ZL_2017$date,ZL_2017$ZL, pch = 19, col = "Orange")
+# lines(ZL_2017$date,ZL_2017$ZL, pch = 19, col = "Orange")
+# points(ZL_2018$date,ZL_2018$ZL, pch = 19, col = "Blue")
+# lines(ZL_2018$date,ZL_2018$ZL, pch = 19, col = "Blue")
+# points(ZL_2019$date,ZL_2019$ZL, pch = 19, col = "Purple")
+# lines(ZL_2019$date,ZL_2019$ZL, pch = 19, col = "Purple")
+# points(ZL_2020$date,ZL_2020$ZL, pch = 19, col = "Black")
+# lines(ZL_2020$date,ZL_2020$ZL, pch = 19, col = "Black")
+# axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
+# #mtext('Months', side = 1, line = 2.5)
+# mtext(expression(paste('ZL')), side = 2, line = 2)
+# legend_order <- c(2016:2020)
+# legend_colour<-c( "Red","Orange","Blue","Purple","Black")
+# legend("topleft", legend = legend_order, bty = "n",
+#        col = legend_colour, pch=19, ncol = 2)
+# #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
+# dev.off()
+
+#### UNUSED PHYSICAL CONTROL PLOT - RH monthly trends ####
+# RH_2016 <- selectByDate(df_merge_month,year = 2016)[,c(1,7)]
+# RH_2017 <- selectByDate(df_merge_month,year = 2017)[,c(1,7)]
+# RH_2018 <- selectByDate(df_merge_month,year = 2018)[,c(1,7)]
+# RH_2019 <- selectByDate(df_merge_month,year = 2019)[,c(1,7)]
+# RH_2020 <- selectByDate(df_merge_month,year = 2020)[,c(1,7)]
+# RH_2016$date <- format(as.POSIXct(RH_2016$date),"%m")
+# RH_2017$date <- format(as.POSIXct(RH_2017$date),"%m")
+# RH_2018$date <- format(as.POSIXct(RH_2018$date),"%m")
+# RH_2019$date <- format(as.POSIXct(RH_2019$date),"%m")
+# RH_2020$date <- format(as.POSIXct(RH_2020$date),"%m")
+# 
+# jpeg(filename='fig/RH_years.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar=c(4,4,1,1),xpd=FALSE)
+# plot(RH_2016$date, RH_2016$RH, type = 'l', xlab = '', ylab = '', ylim =c(65,105) ,col = "Red", xaxt = "n")
+# points(RH_2016$date,RH_2016$RH, pch = 19, col = "Red")
+# points(RH_2017$date,RH_2017$RH, pch = 19, col = "Orange")
+# lines(RH_2017$date,RH_2017$RH, pch = 19, col = "Orange")
+# points(RH_2018$date,RH_2018$RH, pch = 19, col = "Blue")
+# lines(RH_2018$date,RH_2018$RH, pch = 19, col = "Blue")
+# points(RH_2019$date,RH_2019$RH, pch = 19, col = "Purple")
+# lines(RH_2019$date,RH_2019$RH, pch = 19, col = "Purple")
+# points(RH_2020$date,RH_2020$RH, pch = 19, col = "Black")
+# lines(RH_2020$date,RH_2020$RH, pch = 19, col = "Black")
+# axis(side = 1, at = c(1:12), labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), las = 2, cex = 0.5)
+# #mtext('Months', side = 1, line = 2.5)
+# mtext(expression(paste('RH')), side = 2, line = 2)
+# legend_order <- c(2016:2020)
+# legend_colour<-c( "Red","Orange","Blue","Purple","Black")
+# legend("topleft", legend = legend_order, bty = "n",
+#        col = legend_colour, pch=19, ncol = 2)
+# #grid(nx =25,ny = 5, lwd =0.5, lty = 1, col = "gray")
+# dev.off()
 
 
-
-##Resore to Default par()
-dev.off()
+#### TIME SERIES ANALYSIS - monthly trends ####
 
 library(dplyr)
 library(ggpubr)
 library(rstatix)
 
-#Alternative plot
-library(openair)
-jpeg(filename='fig/FCO2_smooth.jpg', unit = 'cm', width = 20, height = 20, res = 360)
-smoothTrend(df_merge_month, pollutant = "FCO2", deseason = T, simulate = T)
-dev.off()
+
+# FCO2 Theil-Sen analysis
 jpeg(filename='fig/FCO2_theil.jpg', unit = 'cm', width = 20, height = 20, res = 360)
 TheilSen(df_merge_month,pollutant = "FCO2", xlab = "year", date.breaks = 5, date.format = "%Y")
 dev.off()
-jpeg(filename='fig/FCO2_WS_alt.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-ggplot(df_merge_month, aes(FCO2, WS)) +
-  geom_point() +
-  geom_smooth(formula = y~x, method = "lm") + 
-  stat_regline_equation(data = df_merge_month, label.x = 0.0, label.y = 1.1)
-dev.off()
+
+# # FCO2 trend analysis
+# jpeg(filename='fig/FCO2_smooth.jpg', unit = 'cm', width = 20, height = 20, res = 360)
+# smoothTrend(df_merge_month, pollutant = "FCO2", deseason = T, simulate = T)
+# dev.off()
+
+# jpeg(filename='fig/FCO2_WS_alt.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# ggplot(df_merge_month, aes(FCO2, WS)) +
+#   geom_point() +
+#   geom_smooth(formula = y~x, method = "lm") + 
+#   stat_regline_equation(data = df_merge_month, label.x = 0.0, label.y = 1.1)
+# dev.off()
 
 
-#Descriptive Statistic Mean and SD table overall
+#### DESCRIPTIVE STATISTICS ####
+
+library(lubridate)
+
+
 mean_df <- sapply(na.omit(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), mean)
 sd_df <- sapply(na.omit(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), sd)
 df_statistic <- data.frame(rbind(mean_df,sd_df))
 row.names(df_statistic) <- c("Mean","SD")
 write.table(x = df_statistic,file = "descriptive_statistic.csv", sep = ",", row.names = TRUE)
 
-####mean and SD in years #####
-library(lubridate)
-library(openair)
+#### mean and SD in years #####
+
 #df_merge_year$date <- year(df_merge_year$date)
 year_df <- df_merge_year[c(1,5,26,4,3,15,20,27,30,17,18,7,11)]
 date_2016 <- selectByDate(df, year = 2016)
@@ -1013,8 +715,11 @@ sd_df_2 <- rbind(sapply(sapply(date_2016[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2020[c(4,5,8)],na.omit), sd))
 sd_df <- cbind(year_df$date,sd_df_1,sd_df_2)
 colnames(sd_df)[1] <- "date"
+
 library(plyr)
+
 df_statistic_year <- rbind.fill(year_df,as.data.frame(sd_df))
+
 row.names(df_statistic_year) <- c("Mean 2016", "Mean 2017", "Mean 2018", "Mean 2019", "Mean 2020",
                                   "SD 2016", "SD 2017", "SD 2018", "SD 2019", "SD 2020")
 
@@ -1646,7 +1351,89 @@ doubleYScale(plot_1, plot_2, add.ylab2 = TRUE, use.style = FALSE)
 dev.off()
 
 
+# #### DAILY TIME SCALE ####
+# df_day <- timeAverage(df, avg.time = "1 day")
+# cor.test(df_day$FCO2,df_day$WS)
 
+#DATA ANALYSIS
+#Time series
+#FCO2
+# jpeg(filename='fig/Fco2_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$FCO2, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")))
+# dev.off()
+# 
+# 
+# jpeg(filename='fig/Rain_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$P_RAIN, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('Cumulative', "", 'rian (','m','m',')' ,sep = "")))
+# dev.off()
+# 
+# jpeg(filename='fig/PPFD_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$PPFD, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('PPDF (','µ','molC','','m'^{'-2'}, 's'^{'-1'},')',sep = "")))
+# dev.off()
+# 
+# 
+# jpeg(filename='fig/TA_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$TA, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('TA (','C'^{O},')',sep = "")))
+#    
+# dev.off()
+# 
+# 
+# 
+# jpeg(filename='fig/LE_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$LE, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('LE(','W','m'^{'-2'},')',sep = "")))
+# 
+# dev.off()
+# 
+# 
+# jpeg(filename='fig/H_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$H, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('H(','W','m'^{'-2'},')',sep = "")))
+# 
+# dev.off()
+# 
+# 
+# jpeg(filename='fig/RN&RG_year.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$RG, type = 'p',pch = 19, xlab = 'Time', col='orange',ylim = c(-100,500),
+#      ylab=expression(paste('RN','&','RG (','W','m'^{'-2'},')',sep = "")))
+# lines(df_merge_month$date,df_merge_month$RG,col = 'orange')
+# lines(df_merge_month$date,df_merge_month$RN,col='red')
+# points(df_merge_month$date,df_merge_month$RN,col='red', pch = 19)
+# dev.off() 
+# 
+# jpeg(filename='fig/USTAR.jpg', unit = 'cm', width = 12, height = 10, res = 360)
+# par (mar = c(4,5,1,1))  #TIME SERIES
+# plot(df_merge_month$date,df_merge_month$USTAR, type = 'l', xlab = 'Time', 
+#      ylab=expression(paste('U*(','m'^{'1'},'s'^{'-1'},')',sep = "")))
+# 
+# dev.off()
+
+
+#plot(df_merge_month$date,df_merge_month$H, type = 'l', xlab = 'Time',  
+#     ylab='Sensible Heat (Wm')
+
+#plot(SWM$date,SWM$LE,  type = 'l', xlab = 'Time', 
+#     ylab='Sensible Heat (Wm')
+
+
+
+#df_merge_month$H[which(df_merge_month$H < -1 | df_merge_month$H > 2 )] <- NA
+#library(openair)
+#NEM_date <- selectByDate(df_merge_month, month = c(12))[,1]
+#SWM_date <- selectByDate(df_merge_month, month = c(6))[,1]
+#FTM_date <- selectByDate(df_merge_month, month = c(10))[,1]
+#STM_date <- selectByDate(df_merge_month, month = c(4))[,1]
 
 
 
