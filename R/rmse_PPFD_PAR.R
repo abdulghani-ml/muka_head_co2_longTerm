@@ -4,6 +4,7 @@ library(zoo)
 # PPFD
 PPFD <- data.frame(date=df$date,PPFD=df$PPFD)
 PPFD$PPFD <- PPFD$PPFD * 60 * 30 / 10^6 # Convert from umol m-2 s-1 to mol m-2 for 30 min avg time
+#PPFD$PPFD[which(PPFD$PPFD < 0)] <- NA # remove all negative values of PPFD
 
 # Convert from umol m-2 to umol m-2 d-1
 PPFD24 <-rollapply(PPFD$PPFD, 48, sum, by=48)
@@ -29,7 +30,7 @@ rm(PPFD24,PAR)
 PPFD_PAR_month <- timeAverage(PPFD_PAR, avg.time = "1 month")
 
 # Plot time series
-plot(PPFD_PAR_month$date,PPFD_PAR_month$PPFD24,pch=19,ylim = c(20,80))
+plot(PPFD_PAR_month$date,PPFD_PAR_month$PPFD24,pch=19)
 points(PPFD_PAR_month$date,PPFD_PAR_month$PAR,pch=19,col='green')
 
 
@@ -46,6 +47,6 @@ mean(PPFD_PAR_month$PPFD24, na.rm = T)
 # RMSE
 sqrt(mean((PPFD_PAR_month$PPFD24 - PPFD_PAR_month$PAR)^2, na.rm = T)) 
 
-
+rm(lmPPFD_PAR)
 
 
