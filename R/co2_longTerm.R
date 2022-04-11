@@ -65,12 +65,20 @@ df_ec<- df_ec[-1,]  #remove the 1st row
 
 
 # Delete unnecessary columns and rows in biomet data files
-df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unamed)
+df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unnamed)
 
 
 #Rename the date
 colnames(df_ec)[1] <- "DATE"
 colnames(df_biomet)[7] <- "DATE"
+
+# Change the date to POSIXCT format
+df_ec$DATE <- strptime(df_ec$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
+df_ec$DATE <- as.POSIXct.POSIXlt(df_ec$DATE)
+
+df_biomet$DATE <- strptime(df_biomet$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
+df_biomet$DATE <- as.POSIXct.POSIXlt(df_biomet$DATE)
+
 
 #### merge df with df_bimet ####
 df <- merge(df_ec,df_biomet,by= c('DATE'))
@@ -91,13 +99,14 @@ df[,-1] <- charactersNumeric(df[,-1])
 # To check the class
 #sapply(df,class)
 
-# Change the date to POSIXCT format
-df$DATE <- strptime(df$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
-#class(df$DATE)
-df$DATE <- as.POSIXct.POSIXlt(df$DATE)
+
 
 #Change name DATE to date
 colnames(df)[1] <- "date"
+
+# Change the date to POSIXCT format
+df$date <- strptime(df$date, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
+df$date <- as.POSIXct.POSIXlt(df$date)
 
 # extracting related variables from raw variables
 df <- data.frame(df$date,df$DOY,df$WS,df$WD,
@@ -142,11 +151,12 @@ df$H[which(df$H_QC == 2)] <- NA
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
 
 
-#### atmospheric stability values #####
+#### Atmospheric stability classification #####
 
 unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
-neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]   #neutral, previously z
+neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]  #neutral, previously z
 stable <- df$ZL[which(df$ZL > 0.1)]             #stable, previously x
+
 
 # Average to 1 month
 df_month <- timeAverage(df, avg.time = "1 month")
@@ -165,6 +175,11 @@ df_merge_month$CHL[df_merge_month$CHL > 3] <- NA
 df_merge_month$TS[df_merge_month$TS > 34] <- NA
 
 rm(df_biomet, df_ec)
+
+# Create Month Variable
+df_merge_month$month <- months(df_merge_month$date)
+# Create Year Variable
+df_merge_month$year <- format(df_merge_month$date,"%Y")
 
 #### MONTHLY TIME SCALE - Partitioning monsoon & analysis ####
 
@@ -681,18 +696,18 @@ dev.off()
 #### DESCRIPTIVE STATISTICS ####
 
 library(lubridate)
+library(plyr)
 
-
+## Mean and SD for all years
 mean_df <- sapply(na.omit(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), mean)
 sd_df <- sapply(na.omit(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), sd)
 df_statistic <- data.frame(rbind(mean_df,sd_df))
 row.names(df_statistic) <- c("Mean","SD")
-write.table(x = df_statistic,file = "descriptive_statistic.csv", sep = ",", row.names = TRUE)
 
-#### mean and SD in years #####
-
-#df_merge_year$date <- year(df_merge_year$date)
+## Mean and SD for every year 
 year_df <- df_merge_year[c(1,5,26,4,3,15,20,27,30,17,18,7,11)]
+
+# EC data
 date_2016 <- selectByDate(df, year = 2016)
 date_2017 <- selectByDate(df, year = 2017)
 date_2018 <- selectByDate(df, year = 2018)
@@ -703,6 +718,8 @@ sd_df_1 <- rbind(sapply(sapply(date_2016[c(3,4,5,7,11,15,17,18,20)],na.omit), sd
                  sapply(sapply(date_2018[c(3,4,5,7,11,15,17,18,20)],na.omit), sd),
                  sapply(sapply(date_2019[c(3,4,5,7,11,15,17,18,20)],na.omit), sd),
                  sapply(sapply(date_2020[c(3,4,5,7,11,15,17,18,20)],na.omit), sd))
+
+## Sat data
 date_2016 <- selectByDate(df_sat, year = 2016)
 date_2017 <- selectByDate(df_sat, year = 2017)
 date_2018 <- selectByDate(df_sat, year = 2018)
@@ -713,98 +730,67 @@ sd_df_2 <- rbind(sapply(sapply(date_2016[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2018[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2019[c(4,5,8)],na.omit), sd),
                  sapply(sapply(date_2020[c(4,5,8)],na.omit), sd))
-sd_df <- cbind(year_df$date,sd_df_1,sd_df_2)
+sd_df <- cbind(sd_df_1,sd_df_2)
+sd_df <- as.data.frame(sd_df)
+
+sd_df <- cbind(year_df$date, sd_df)
+
 colnames(sd_df)[1] <- "date"
 
-library(plyr)
-
-df_statistic_year <- rbind.fill(year_df,as.data.frame(sd_df))
+df_statistic_year <- rbind.fill(year_df,sd_df)
 
 row.names(df_statistic_year) <- c("Mean 2016", "Mean 2017", "Mean 2018", "Mean 2019", "Mean 2020",
                                   "SD 2016", "SD 2017", "SD 2018", "SD 2019", "SD 2020")
 
 df_statistic_year <- df_statistic_year[order(df_statistic_year$date),]
 df_statistic_year <-round(df_statistic_year[,-1], 2)
-write.table(x = df_statistic_year,file = "statistic_year_1.csv", sep = ",", row.names = TRUE)
 
 
-#Pearson correlation coefficient
-cor_Pearson <- cor(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)], method = "pearson", use = "complete.obs")
+# Pearson correlation coefficient
+cor_Pearson <- cor(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)], 
+                   method = "pearson", use = "complete.obs")
 cor_Pearson[upper.tri(cor_Pearson, diag = FALSE)]<- 0
-write.table(x = cor_Pearson,file = "cor_Pearson.csv", sep = ",", row.names = TRUE)
 
-#Correlation Trest -Pvalue statical Analysis
-pvalue_test<- data.frame(c(
-cor.test(df_merge_month$FCO2,df_merge_month$CHL)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$SST)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$TA)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$TS)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$PAR)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$USTAR)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$RH)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$PPFD)[3] ,
-cor.test(df_merge_month$FCO2, df_merge_month$ZL)[3]
+rm(sd_df_1,sd_df_2)
+
+#### CORRELATION Analysis ####
+
+library("Hmisc")
+
+pvalue_test <- data.frame(c(
+  cor.test(df_merge_month$FCO2, df_merge_month$CHL)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$SST)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$TA)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$TS)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$PAR)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$USTAR)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$RH)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$PPFD)[3] ,
+  cor.test(df_merge_month$FCO2, df_merge_month$ZL)[3]
 ))
+
 colnames(pvalue_test) <- c("CHL","SST","TA","TS","PAR","USTAR","RH","PPFD","ZL")
 row.names(pvalue_test) <- "FCO2"
-write.table(x = pvalue_test,file = "pvalue.csv", sep = ",", row.names = FALSE)
 
-#install.packages("Hmisc")
-library("Hmisc")
-pvalue_test <- rcorr(as.matrix(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), type = "pearson")$P
-pvalue_test[upper.tri(pvalue_test)]<- 0
-write.table(x = pvalue_test,file = "pvalue_Pearson.csv", sep = ",", row.names = TRUE)
+pvalue_test <- rcorr(as.matrix(df_merge_month[c(5,26,4,3,15,20,27,30,17,18,7,11)]), 
+                     type = "pearson")$P
+pvalue_test[upper.tri(pvalue_test)] <- 0
 
-#Linear Correlation
+
+
+#### BIO CONTROL - Correlation Plots ####
+
+## BIO CHL
 jpeg(filename='fig/FCO2_CHL_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
 plot(df_merge_month$CHL, df_merge_month$FCO2,pch = 19,cex= 0.5, xlab= "", ylab="")
 abline(lm(df_merge_month$FCO2~df_merge_month$CHL,data = df_merge_month), col = "red")
-mtext(side = 1, text = expression(paste('Chlorophyll', sep = "")),line = 2)
+mtext(side = 1, text = expression(paste('Chl', sep = "")),line = 2)
 mtext(side = 2, text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')', sep = )),line = 2)
 dev.off()
 
-jpeg(filename='fig/FCO2_WD_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar = c(4,4,1,1))
-plot(df_merge_month$WD, df_merge_month$FCO2, pch = 19, cex = 0.5,xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$WD,data = df_merge_month), col = "red")
-mtext(side = 1,text = expression(paste('Wind Direction (','degree '^'o','North', ')', sep = "")), line = 2)
-mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
-dev.off()
 
-jpeg(filename='fig/FCO2_WS_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar = c(4,4,1,1))
-plot(df_merge_month$WS, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$WS,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")), line = 2 )
-mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
-dev.off()
-
-jpeg(filename='fig/FCO2_TA_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar = c(4,4,1,1))
-plot(df_merge_month$TA, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$TS,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")), line = 2 )
-mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
-dev.off()
-
-jpeg(filename='fig/FCO2_TS_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar = c(4,4,1,1))
-plot(df_merge_month$TS, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$TS,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")), line = 2 )
-mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
-dev.off()
-
-
-jpeg(filename='fig/FCO2_SST_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
-par(mar = c(4,4,1,1))
-plot(df_merge_month$SST, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$SST,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('SST (','C'^'o', ')', sep = "")), line = 2 )
-mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
-dev.off()
-
+## BIO PAR
 jpeg(filename='fig/FCO2_PAR_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
 plot(df_merge_month$PAR, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
@@ -813,6 +799,7 @@ mtext(side = 1, text =expression(paste('PAR', sep = "")), line = 2 )
 mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
 
+## BIO PPFD
 jpeg(filename='fig/FCO2_PPFD_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
 plot(df_merge_month$PPFD, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
@@ -821,43 +808,77 @@ mtext(side = 1, text =expression(paste('PPFD', sep = "")), line = 2 )
 mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
 
-jpeg(filename='fig/FCO2_USTAR_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+
+#### PHY CONTROL - Correlation Plots ####
+
+## PHY WS
+jpeg(filename='fig/FCO2_WS_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
-plot(df_merge_month$USTAR, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$RH,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('USTAR', sep = "")), line = 2 )
+plot(df_merge_month$WS, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+abline(lm(df_merge_month$FCO2~df_merge_month$WS,data = df_merge_month), col = "red")
+mtext(side = 1, text =expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")), line = 2 )
 mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
 
-
-jpeg(filename='fig/FCO2_RH_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+## PHY TA
+jpeg(filename='fig/FCO2_TA_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
-plot(df_merge_month$RH, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$RH,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('RH', sep = "")), line = 2 )
+plot(df_merge_month$TA, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+abline(lm(df_merge_month$FCO2~df_merge_month$TS,data = df_merge_month), col = "red")
+mtext(side = 1, text =expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")), line = 2 )
 mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
 
-jpeg(filename='fig/FCO2_ZL_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+## PHY TS
+jpeg(filename='fig/FCO2_TS_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
 par(mar = c(4,4,1,1))
-plot(df_merge_month$ZL, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
-abline(lm(df_merge_month$FCO2~df_merge_month$ZL,data = df_merge_month), col = "red")
-mtext(side = 1, text =expression(paste('ZL', sep = "")), line = 2 )
+plot(df_merge_month$TS, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+abline(lm(df_merge_month$FCO2~df_merge_month$TS,data = df_merge_month), col = "red")
+mtext(side = 1, text =expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")), line = 2 )
 mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
 
-
-
-#Restore par() to default
+## PHY SST
+jpeg(filename='fig/FCO2_SST_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+par(mar = c(4,4,1,1))
+plot(df_merge_month$SST, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+abline(lm(df_merge_month$FCO2~df_merge_month$SST,data = df_merge_month), col = "red")
+mtext(side = 1, text =expression(paste('SST (','C'^'o', ')', sep = "")), line = 2 )
+mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
 dev.off()
-library(dplyr)
-library('openair')
 
-#Create Month Variable
-df_merge_month$month <- months(df_merge_month$date)
-#Create Year variable
-df_merge_month$year <- format(df_merge_month$date,"%Y")
-#inter-annual
+# ## PHY RH
+# jpeg(filename='fig/FCO2_RH_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar = c(4,4,1,1))
+# plot(df_merge_month$RH, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+# abline(lm(df_merge_month$FCO2~df_merge_month$RH,data = df_merge_month), col = "red")
+# mtext(side = 1, text =expression(paste('RH', sep = "")), line = 2 )
+# mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
+# dev.off()
+
+# ## PHY USTAR
+# jpeg(filename='fig/FCO2_USTAR_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar = c(4,4,1,1))
+# plot(df_merge_month$USTAR, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+# abline(lm(df_merge_month$FCO2~df_merge_month$RH,data = df_merge_month), col = "red")
+# mtext(side = 1, text =expression(paste('USTAR', sep = "")), line = 2 )
+# mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
+# dev.off()
+
+# ## PHY Z/L
+# jpeg(filename='fig/FCO2_ZL_lin.jpg', unit = 'cm', width = 10, height = 10, res = 360)
+# par(mar = c(4,4,1,1))
+# plot(df_merge_month$ZL, df_merge_month$FCO2,pch = 19, cex = 0.5, xlab= "", ylab="")
+# abline(lm(df_merge_month$FCO2~df_merge_month$ZL,data = df_merge_month), col = "red")
+# mtext(side = 1, text =expression(paste('ZL', sep = "")), line = 2 )
+# mtext(side = 2,text = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = "")), line = 2)
+# dev.off()
+
+
+#### BIO CONTROL - Boxplot analysis ####
+
+
+# inter-annual
 jpeg(filename='fig/CO2_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
 boxplot(FCO2 ~ year, data = df_merge_month, xlab='',ylab='')
 mtext(expression(paste('CO'['2'],' flux (',mu,'mol ',' m'^{'-2'}, ' s'^{'-1'},')')), 
@@ -873,13 +894,23 @@ mtext(text = "Year",side = 1, line = 2)
 #title("Chlorophyll", line=1)
 dev.off()
 
-jpeg(filename='fig/WD_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(WD ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('Wind Direction (','degree '^'o','North', ')', sep = "")), 
-      side=2, line = 2)
+jpeg(filename='fig/PAR_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
+boxplot(PAR ~ year, data = df_merge_month, xlab='Month',ylab='')
+mtext(expression(paste('PAR')), 
+      side=2, line = 2.5)
 mtext(text = "Year",side = 1, line = 2)
-#title("Wind Direction", line=1)
+#title("PAR RADIATION", line=1)
 dev.off()
+
+jpeg(filename='fig/PPFD_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
+boxplot(PPFD ~ year, data = df_merge_month, xlab='Month',ylab='')
+mtext(expression(paste('PPFD')), 
+      side=2, line = 2.5)
+mtext(text = "Year",side = 1, line = 2)
+#title("PPFD", line=1)
+dev.off()
+
+#### PHYSICAL CONTROL - Boxplot analysis ####
 
 jpeg(filename='fig/WS_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
 boxplot(WS ~ year, data = df_merge_month, xlab='Month',ylab='')
@@ -914,50 +945,39 @@ mtext(text = "Year",side = 1, line = 2)
 #title("Sea Surface Temperature", line=1)
 dev.off()
 
-jpeg(filename='fig/PAR_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(PAR ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('PAR')), 
-      side=2, line = 2.5)
-mtext(text = "Year",side = 1, line = 2)
-#title("PAR RADIATION", line=1)
-dev.off()
 
-jpeg(filename='fig/PPFD_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(PPFD ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('PPFD')), 
-      side=2, line = 2.5)
-mtext(text = "Year",side = 1, line = 2)
-#title("PPFD", line=1)
-dev.off()
+# jpeg(filename='fig/USTAR_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
+# boxplot(PAR ~ year, data = df_merge_month, xlab='Month',ylab='')
+# mtext(expression(paste('USTAR')), 
+#       side=2, line = 2.5)
+# mtext(text = "Year",side = 1, line = 2)
+# #title("USTAR", line=1)
+# dev.off()
+# 
+# jpeg(filename='fig/RH_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
+# boxplot(RH ~ year, data = df_merge_month, xlab='Month',ylab='')
+# mtext(expression(paste('RH')), 
+#       side=2, line = 2.5)
+# mtext(text = "Year",side = 1, line = 2)
+# #title("Relative Humidity", line=1)
+# dev.off()
+# 
+# jpeg(filename='fig/ZL_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
+# boxplot(ZL ~ year, data = df_merge_month, xlab='Month',ylab='')
+# mtext(expression(paste('ZL')), 
+#       side=2, line = 2.5)
+# mtext(text = "Year",side = 1, line = 2)
+# #title("ZL", line=1)
+# dev.off()
 
-jpeg(filename='fig/USTAR_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(PAR ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('USTAR')), 
-      side=2, line = 2.5)
-mtext(text = "Year",side = 1, line = 2)
-#title("USTAR", line=1)
-dev.off()
 
-jpeg(filename='fig/RH_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(RH ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('RH')), 
-      side=2, line = 2.5)
-mtext(text = "Year",side = 1, line = 2)
-#title("Relative Humidity", line=1)
-dev.off()
-
-jpeg(filename='fig/ZL_year_box.jpg', unit = 'cm', width = 12, height = 14, res = 360)
-boxplot(ZL ~ year, data = df_merge_month, xlab='Month',ylab='')
-mtext(expression(paste('ZL')), 
-      side=2, line = 2.5)
-mtext(text = "Year",side = 1, line = 2)
-#title("ZL", line=1)
-dev.off()
-
-####SMOOTHWITH GGPLOT####
-jpeg(filename='fig/CO2_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
 library(scales)
 library(ggplot2)
+
+#### BIO CONTROL - smooth trends ggplot ####
+
+jpeg(filename='fig/CO2_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
 ggplot(df_merge_month, aes(date, FCO2)) +
   geom_line() + 
   xlab('Year') +
@@ -968,9 +988,8 @@ ggplot(df_merge_month, aes(date, FCO2)) +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
-jpeg(filename='fig/CHL_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
+jpeg(filename='fig/CHL_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
 ggplot(df_merge_month, aes(date, CHL)) +
   geom_line() + 
   xlab('Month') +
@@ -981,74 +1000,8 @@ ggplot(df_merge_month, aes(date, CHL)) +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
-jpeg(filename='fig/WD_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, WD)) +
-  geom_line() + 
-  xlab('Month') +
-  stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('Wind Direction (','degree '^'o','North', ')', sep = "")))
-#geom_text(data = df_merge_month, aes(date, WD),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
-#geom_text() +
-#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
-dev.off()
-
-jpeg(filename='fig/WS_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, WS)) +
-  geom_line() + 
-  xlab('Month') +
-  stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")))
-#geom_text(data = df_merge_month, aes(date, WS),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
-#geom_text() +
-#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
-dev.off ()
-
-jpeg(filename='fig/TA_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, TA)) +
-  geom_line() + 
-  xlab('Month') +
-  stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")))
-#geom_text(data = df_merge_month, aes(date, TA),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
-#geom_text() +
-#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
-dev.off()
-
-jpeg(filename='fig/TS_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, TS)) +
-  geom_line() + 
-  xlab('Month') +
-  stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")))
-#geom_text(data = df_merge_month, aes(date, TS),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
-#geom_text() +
-#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
-dev.off()
-
-jpeg(filename='fig/SST_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, SST)) +
-  geom_line() + 
-  xlab('Month') +
-  stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('SST',' (','C'^{'o'},')', sep = "")))
-#geom_text(data = df_merge_month, aes(date, SST),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
-#geom_text() +
-#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
-dev.off()
-
-jpeg(filename='fig/PAR_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
+jpeg(filename='fig/PAR_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
 ggplot(df_merge_month, aes(date, PAR)) +
   geom_line() + 
   xlab('Month') +
@@ -1059,9 +1012,9 @@ ggplot(df_merge_month, aes(date, PAR)) +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
-jpeg(filename='fig/PPFD_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
+jpeg(filename='fig/PPFD_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
+
 ggplot(df_merge_month, aes(date, PPFD)) +
   xlim(c(as.POSIXct("2019-01-01 00:00:00"),as.POSIXct("2020-12-31 00:00:00"))) +
   geom_line() + 
@@ -1073,48 +1026,65 @@ ggplot(df_merge_month, aes(date, PPFD)) +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
+#### PHY CONTROL - smooth trends ggplot ####
 
-jpeg(filename='fig/USTAR_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date,USTAR)) +
+jpeg(filename='fig/WS_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
+
+ggplot(df_merge_month, aes(date, WS)) +
   geom_line() + 
   xlab('Month') +
   stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('USTAR', sep = "")))
-#geom_text(data = df_merge_month, aes(date, USTAR),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
+  ylab(expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = "")))
+#geom_text(data = df_merge_month, aes(date, WS),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
+#geom_text() +
+#annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
+dev.off ()
+
+jpeg(filename='fig/TA_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
+
+ggplot(df_merge_month, aes(date, TA)) +
+  geom_line() + 
+  xlab('Month') +
+  stat_smooth(method='auto', color='black') +
+  ylab(expression(paste('T'['a'],' (','C'^{'o'},')', sep = "")))
+#geom_text(data = df_merge_month, aes(date, TA),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
 #geom_text() +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
-jpeg(filename='fig/RH_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date, RH)) +
+jpeg(filename='fig/TS_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
+
+ggplot(df_merge_month, aes(date, TS)) +
   geom_line() + 
   xlab('Month') +
   stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('RH', sep = "")))
-#geom_text(data = df_merge_month, aes(date, RH),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
+  ylab(expression(paste('T'['s'],' (','C'^{'o'},')', sep = "")))
+#geom_text(data = df_merge_month, aes(date, TS),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
 #geom_text() +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
-jpeg(filename='fig/ZL_year_smooth.jpg', unit = 'cm', width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
-library(scales)
-library(ggplot2)
-ggplot(df_merge_month, aes(date,ZL)) +
+jpeg(filename='fig/SST_year_smooth.jpg', unit = 'cm', 
+     width = 10, height = 10, res = 360)    #TIME SERIES WITH SMOOTH BEST FIT LINES
+
+ggplot(df_merge_month, aes(date, SST)) +
   geom_line() + 
   xlab('Month') +
   stat_smooth(method='auto', color='black') +
-  ylab(expression(paste('ZL', sep = "")))
-#geom_text(data = df_merge_month, aes(date, ZL),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
+  ylab(expression(paste('SST',' (','C'^{'o'},')', sep = "")))
+#geom_text(data = df_merge_month, aes(date, SST),y = 20, color = "red", hjust = -0.5) #These line is to put wordsin the plot
 #geom_text() +
 #annotate("text", label = "t3", x = date, y = 24.5, size = 8, colour = "red")
 dev.off()
 
 
-#Break into years
+
+#### BIO CONTROL - yearly analysis ####
+
+## FCO2
 jpeg(filename='fig/Timeseries_FCO2_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)    #Break into Years Time series
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
@@ -1125,9 +1095,9 @@ ggplot((df_merge_month_1), aes(x = date, y = FCO2)) +
   ylab(label = expression(paste('CO'['2'],' flux (','molC','','m'^{'-2'}, 'yr'^{'-1'},')',sep = ""))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
+## CHL
 jpeg(filename='fig/Timeseries_CHL_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)    #Break into Years Time series
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
@@ -1138,75 +1108,9 @@ ggplot((df_merge_month_1), aes(x = date, y = CHL)) +
   ylab(label = expression(paste("Chlorophyll"))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
-jpeg(filename='fig/Timeseries_WD_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)    #Break into Years Time series
-df_merge_month_1 <- df_merge_month
-df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = WD)) + 
-  geom_line(col='pink') +  
-  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
-  xlab(label = "Time") +
-  ylab(label = expression(paste('Wind Direction (','degree '^'o','North', ')', sep = ""))) + 
-  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
-  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
-dev.off()
-
-
-jpeg(filename='fig/Timeseries_WS_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)    #Break into Years Time series
-df_merge_month_1 <- df_merge_month
-df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = WS)) + 
-  geom_line(col='pink') +  
-  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
-  xlab(label = "Time") +
-  ylab(label = expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = ""))) + 
-  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
-  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
-dev.off()
-
-jpeg(filename='fig/Timeseries_TA_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
-df_merge_month_1 <- df_merge_month
-df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = TA)) + 
-  geom_line(col='pink') +  
-  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
-  xlab(label = "Time") +
-  ylab(label = expression(paste('Air Temperature',' ('^{'o'}, 'C',')'))) + 
-  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
-  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
-dev.off()
-
-jpeg(filename='fig/Timeseries_TS_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
-df_merge_month_1 <- df_merge_month
-df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = TS)) + 
-  geom_line(col='pink') +  
-  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
-  xlab(label = "Time") +
-  ylab(label = expression(paste('T'['s'],' ('^{'o'}, 'C',')'))) + 
-  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
-  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
-dev.off()
-
-jpeg(filename='fig/Timeseries_SST_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
-df_merge_month_1 <- df_merge_month
-df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = SST)) + 
-  geom_line(col='pink') +  
-  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
-  xlab(label = "Time") +
-  ylab(label = expression(paste('Sea Surface Temperature',' ('^{'o'}, 'C',')'))) + 
-  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
-  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
-dev.off()
-
+## PAR
 jpeg(filename='fig/Timeseries_PAR_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
@@ -1217,9 +1121,9 @@ ggplot((df_merge_month_1), aes(x = date, y = PAR)) +
   ylab(label = expression(paste('PAR'))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
+## PPFD
 jpeg(filename='fig/Timeseries_PPFD_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
@@ -1230,64 +1134,105 @@ ggplot((df_merge_month_1), aes(x = date, y = PPFD)) +
   ylab(label = expression(paste('PPFD'))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
-jpeg(filename='fig/Timeseries_USTAR_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+#### PHY CONTROL - yearly analysis ####
+
+## WS
+jpeg(filename='fig/Timeseries_WS_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)    #Break into Years Time series
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = USTAR)) + 
+ggplot((df_merge_month_1), aes(x = date, y = WS)) + 
   geom_line(col='pink') +  
   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
   xlab(label = "Time") +
-  ylab(label = expression(paste('USTAR'))) + 
+  ylab(label = expression(paste('Wind Speed (', 'ms'^'-1', ')', sep = ""))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
-jpeg(filename='fig/Timeseries_RH_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+## TA
+jpeg(filename='fig/Timeseries_TA_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = RH)) + 
+ggplot((df_merge_month_1), aes(x = date, y = TA)) + 
   geom_line(col='pink') +  
   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
   xlab(label = "Time") +
-  ylab(label = expression(paste('Relative Humidity'))) + 
+  ylab(label = expression(paste('Air Temperature',' ('^{'o'}, 'C',')'))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
-jpeg(filename='fig/Timeseries_ZL_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+## TS
+jpeg(filename='fig/Timeseries_TS_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
 df_merge_month_1 <- df_merge_month
 df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
-ggplot((df_merge_month_1), aes(x = date, y = ZL)) + 
+ggplot((df_merge_month_1), aes(x = date, y = TS)) + 
   geom_line(col='pink') +  
   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
   xlab(label = "Time") +
-  ylab(label = expression(paste('ZL'))) + 
+  ylab(label = expression(paste('T'['s'],' ('^{'o'}, 'C',')'))) + 
   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
-
 dev.off()
 
+## SST
+jpeg(filename='fig/Timeseries_SST_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+df_merge_month_1 <- df_merge_month
+df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
+ggplot((df_merge_month_1), aes(x = date, y = SST)) + 
+  geom_line(col='pink') +  
+  scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
+  xlab(label = "Time") +
+  ylab(label = expression(paste('Sea Surface Temperature',' ('^{'o'}, 'C',')'))) + 
+  facet_wrap( ~ format(date, "%Y"), scales = "free") + 
+  theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
+dev.off()
 
-x <- df_merge_month$RN -df_merge_month$SH - df_merge_month$SLE
-y <- df_merge_month$LE + df_merge_month$H
+# ## RH
+# jpeg(filename='fig/Timeseries_RH_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+# df_merge_month_1 <- df_merge_month
+# df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
+# ggplot((df_merge_month_1), aes(x = date, y = RH)) + 
+#   geom_line(col='pink') +  
+#   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
+#   xlab(label = "Time") +
+#   ylab(label = expression(paste('Relative Humidity'))) + 
+#   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
+#   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
+# dev.off()
+# 
+# ## USTAR
+# jpeg(filename='fig/Timeseries_USTAR_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+# df_merge_month_1 <- df_merge_month
+# df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
+# ggplot((df_merge_month_1), aes(x = date, y = USTAR)) + 
+#   geom_line(col='pink') +  
+#   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
+#   xlab(label = "Time") +
+#   ylab(label = expression(paste('USTAR'))) + 
+#   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
+#   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
+# dev.off()
+# 
+# 
+# ## Z/L
+# jpeg(filename='fig/Timeseries_ZL_all.jpg', unit = 'cm', width = 15, height = 12, res = 360)
+# df_merge_month_1 <- df_merge_month
+# df_merge_month_1$date <- as.Date(df_merge_month_1$date)+1
+# ggplot((df_merge_month_1), aes(x = date, y = ZL)) + 
+#   geom_line(col='pink') +  
+#   scale_x_date(breaks = date_breaks("1 month"),labels = date_format("%Y-%m"))+ 
+#   xlab(label = "Time") +
+#   ylab(label = expression(paste('ZL'))) + 
+#   facet_wrap( ~ format(date, "%Y"), scales = "free") + 
+#   theme( axis.text.x = element_text(angle = 90, hjust = 1, size =5))
+# dev.off()
 
-y[which (y < -300)] <- NA
-x[which (x < - 50)] <- NA
+rm(df_merge_month_1)
 
-#jpeg(filename='fig/EBC_unstable.jpg', width = 10, height = 10, res = 500, units='cm') #This one not sure need check
-par(mar=c(4,4,0.8,0.8))
-plot(x,y, ylab = "LE + H", xlab = "RN - SLE - SH") 
-#legend("topleft",lty=c(1),col='white',bg="white",lwd=2,bty='n')
-#dev.off()
-
-EB_Ratio <- sum(y, na.rm=TRUE)/sum(x,na.rm=TRUE)
-
-#####################################
+#### MISC PLOTS ####
 plot(NEM$date,NEM$FCO2, type='l',col='blue', ylim = c(-0.12,0.1))    #LINE PLOT COMPARE MONSOON
 lines(SWM$date,SWM$FCO2,type='l')
 lines(STM$date,STM$FCO2, type='l', col='red')
@@ -1298,7 +1243,7 @@ lines(SWM$date,SWM$RN,type='l')
 lines(STM$date,STM$RN, type='l', col='red')
 lines(FTM$date,FTM$RN, type='l', col='purple')
 
-##################barplot###################
+#### BARPLOTS #####
 jpeg(filename='fig/histogram_CO2_monthly.jpg', width = 12, height = 8, res = 500, units='cm')       #BARPLOT
 par(mar=c(7,3.8,0.8,0.8))
 barplot(df_merge_month$FCO2,ylab="",xlab=, col='pink')
@@ -1335,7 +1280,7 @@ dev.off()
 
 
 
-#################PLOT SST &TS COMPAR#######################
+#### LATTICE PLOT SST & TS COMPARISON ####
 
 
 library(lattice)
@@ -1349,7 +1294,7 @@ plot_2 <- xyplot(df_merge_month$FCO2~df_merge_month$date,
 doubleYScale(plot_1, plot_2, add.ylab2 = TRUE, use.style = FALSE)
 
 dev.off()
-
+rm(plot_1,plot_2)
 
 # #### DAILY TIME SCALE ####
 # df_day <- timeAverage(df, avg.time = "1 day")
