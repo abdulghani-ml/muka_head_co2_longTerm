@@ -1,6 +1,8 @@
 
 library(zoo)
 
+# Note: You need to have the "df" and "df_sat" datasets before you use this script.
+
 # PPFD
 PPFD <- data.frame(date=df$date,PPFD=df$PPFD)
 PPFD$PPFD <- PPFD$PPFD * 60 * 30 / 10^6 # Convert from umol m-2 s-1 to mol m-2 for 30 min avg time
