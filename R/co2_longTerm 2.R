@@ -1,3 +1,28 @@
+#-----------------------------------------------------------------------#
+#
+# Title:  Long-Term Biological and Physical Controls of CO2 Fluxes 
+#         in A Tropical Coastal Ocean 
+#
+# Authors:Abdulghani Swesi,a,c Yusri Yusup,a,b Mardiana Idayu Ahmad,a Haitem M Almdhun,a
+#         Ehsan Jolous Jamshidi,a Anis Ibrahim, John Stephen Kayode
+#
+# Affiliation:  Environmental Technology, School of Industrial Technology,
+#               Universiti Sains Malaysia
+#
+# Datasets used:
+#   1. Atmosfera (https://atmosfera.usm.my/)
+#   2. MODIS-Aqua
+#   3. SOCAT (https://www.socat.info)
+#
+# Dataset period: 2016-01 to 2017-10 (2 years)
+# No. of rows: 
+# No. of columns:
+# Objective: To combine EC data from Muka Head with Significant 
+# Wave Height (swh) data from EUMETSAT, and precipitation data 
+# from Wunderground.
+#
+#-----------------------------------------------------------------------#
+
 #### 1. Preliminaries #########################################
 require(openair)
 require(dplyr)
@@ -119,6 +144,10 @@ colnames(df) <- c("date","DOY","WS","WD",
 df$TA<- df$TA - 273.15
 df$TS<- df$TS - 273.15
 
+#### Convert FCO2 from micro-mole per second to milli-mole per day ####
+
+FCO2_mmol <- df$FCO2 * 86.4
+df <- cbind(df, FCO2_mmol)
 
 # Remove all improbable values of T
 df$TA[which(df$TA < 0 | df$TA > 100 )] <- NA
@@ -140,8 +169,10 @@ df$LE[which(df$LE_QC == 2)] <- NA
 df$H[which(df$H_QC == 2)] <- NA 
 
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
-
-
+df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
+##### Remove FCO2 from land ######
+df$FCO2[df$WD > 45 & df$WD < 315] <- NA
+df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
 #### Atmospheric stability classification #####
 
 unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
