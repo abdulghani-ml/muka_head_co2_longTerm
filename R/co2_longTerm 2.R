@@ -23,14 +23,15 @@
 #
 #-----------------------------------------------------------------------#
 
-#### 1. Preliminaries #########################################
-require(openair)
+#### Packages #########################################
+require(openair)    # For time averaging
 require(dplyr)
+require(lubridate)  # For daily cumulative rain calculation
 source('R/tools/tool_convert_magic.R')
 source('R/tools/tool_charactersNumeric.R')
 source('R/tools/tool_trapezium_intg_2.R')
 source('R/tools/tool_trapezium_intg_3.R')
-
+source('R/tools/f2pCO2.R')
 
 #### SATELLITE DATA ANALYSIS ####
 #### import sat data ###############
@@ -81,7 +82,7 @@ df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
 
 #### EC DATA ANALYSIS ####
 
-### import EC data ######
+### Import EC data ######
 df_ec<-read.csv('data/station/MCO-MUKA21_full_output.csv')
 df_biomet<- read.csv('data/station/biomet data 21.csv')
 
@@ -97,7 +98,7 @@ df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unamed)
 colnames(df_ec)[1] <- "DATE"
 colnames(df_biomet)[7] <- "DATE"
 
-#### merge df with df_bimet ####
+#### Merge df with df_bimet ####
 df <- merge(df_ec,df_biomet,by= c('DATE'))
 
 
@@ -130,7 +131,8 @@ df <- data.frame(df$date,df$DOY,df$WS,df$WD,
                  df$H,df$LE,df$ZL,df$SH,df$SLE,
                  df$P_RAIN_1_1_1,df$TA_1_1_1,df$ET,
                  df$PPFD_1_1_1,df$USTAR,df$RG_1_1_1,
-                 df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC)
+                 df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC,
+                 df$CO2,df$PA)
 
 
 #Rename variables
@@ -138,16 +140,24 @@ colnames(df) <- c("date","DOY","WS","WD",
                   "FCO2","RN","RH","H2O",
                   "H","LE","ZL","SH","SLE",
                   "P_RAIN","TA","ET","PPFD",
-                  "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC")
+                  "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC",
+                  "co2_mole_fraction", "air_pressure")
 
 # Convert TA, TS from K to Celcius
 df$TA<- df$TA - 273.15
 df$TS<- df$TS - 273.15
 
+
+# Remove FCO2 values that do not follow 
+# the MG1999 parameterization equation
+
+df$FCO2[df$FCO2 > 0.2 | df$FCO2 < -0.2] <- NA
+
 #### Convert FCO2 from micro-mole per second to milli-mole per day ####
 
 FCO2_mmol <- df$FCO2 * 86.4
 df <- cbind(df, FCO2_mmol)
+rm(FCO2_mmol)
 
 # Remove all improbable values of T
 df$TA[which(df$TA < 0 | df$TA > 100 )] <- NA
@@ -170,14 +180,74 @@ df$H[which(df$H_QC == 2)] <- NA
 
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
 df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
+
+
+
+
 ##### Remove FCO2 from land ######
+
 df$FCO2[df$WD > 45 & df$WD < 315] <- NA
 df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
-#### Atmospheric stability classification #####
+df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
 
-unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
-neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]   #neutral, previously z
-stable <- df$ZL[which(df$ZL > 0.1)]             #stable, previously x
+# Calculation of partial pressure of CO2 in air (Pa)
+# mole fraction (mol/mol) = partial pressure(Pa)/ total pressure(Pa)
+# convert Pa to kPa = 1 Pa * 0.001
+# convert mole fraction in ppm to mol/mol (1 ppm * 10^-6)
+PP_air_30 <- NA
+co2_mF_30 <- df$co2_mole_fraction * 10^-6  # convert into mol/mol
+PP_air_30 <- co2_mF_30 * df$air_pressure
+PP_air_30 <- PP_air_30 * 0.001 # convert to kPa
+# convert PP_air into micro-atm
+PP_air_30 <- (PP_air_30/101.325) * 10^6
+df <- cbind(df, PP_air_30)
+rm(PP_air_30,co2_mF_30)
+
+##### Add TS EMA data ####
+
+ts_ema <- read.csv('data/station/TS_ema.csv')
+ts_ema$datetime <- as.character(ts_ema$datetime)
+date <- strptime(ts_ema$datetime, 
+                 format = "%Y-%m-%d %H:%M:%OS", 
+                 tz = "Asia/Kuala_Lumpur")
+ts_ema <- cbind(date, ts_ema)
+colnames(ts_ema)[1] <- 'date'
+ts_ema <- ts_ema[,-c(2,3)]
+
+df <- merge(df, ts_ema, by = "date")
+rm(ts_ema)
+
+##### 30-min CO2 seawater solubility ####
+
+# Solubility of CO2 in seawater
+# Reference: Liu, Q., Fukuda, K., Matsuda T. (2004). 
+# Study of solubility of carbon dioxide in seawater.Journal of JIME, 39(12), 91-96
+S = 0.10615 # [μmol+1 m-2 s-1]. 
+
+##### The 30-min scaled k value using McGillis (2001) ####
+# Schmidt number
+# Sc = 2116.8 + (-136.25*t) + 4.7353*(t^2) + (-0.092307)*(t^3) + 0.0007555*(t^4)
+# t = sea surface temperature
+
+temp <- df$EMA
+U <- df$WS
+Sc <- 2116.8 + (-136.25*temp) + 4.7353*(temp^2) + (-0.092307)*(temp^3) + 0.0007555*(temp^4)
+k_MG2001 <- ((660/Sc)^0.5)*(0.026*(U^3) + 3.3)  ## unit in cm/hr
+
+##### Calculating monthly scaled PCO2,sw ####
+conv_fact <- 100 * 3600 * 0.001 # Convert from umol m-2 s-1 h cm-1 L atm mol-1 to uatm
+PCO2_sw <- ((df$FCO2/(k_MG2001 * S)) * conv_fact) + df$PP_air_30
+
+
+df <- cbind(df,PCO2_sw)
+
+rm(S,Sc,temp,U,PCO2_sw,k_MG2001,conv_fact)
+
+# #### Unused: Atmospheric stability classification #####
+# 
+# unstable <- df$ZL[which(df$ZL < -0.1)]          #unstable, previously y  
+# neutral <- df$ZL[(df$ZL > -0.1 & df$ZL < 0.1)]   #neutral, previously z
+# stable <- df$ZL[which(df$ZL > 0.1)]             #stable, previously x
 
 # Average to 1 month
 df_month <- timeAverage(df, avg.time = "1 month")
@@ -202,6 +272,37 @@ df_merge_month$month <- months(df_merge_month$date)
 # Create Year Variable
 df_merge_month$year <- format(df_merge_month$date,"%Y")
 
+
+#### Calculating daily cumulative precipitation ####
+## Cumulative Rainfall, 2015, 2016, 2017 and 2018 Jan-March no data for rainfall
+
+rain_c <- selectByDate(df,year = 2018)[,c(1,14)]
+rain_2018 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
+                       data=rain_c,FUN=sum)
+rain_c <- selectByDate(df,year = 2019)[,c(1,14)]
+rain_2019 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
+                       data=rain_c,FUN=sum)
+rain_c <- selectByDate(df,year = 2020)[,c(1,14)]
+rain_2020 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
+                       data=rain_c,FUN=sum)
+
+
+
+#### Normalizing PCO2,sw by seawater temperature ####
+temp_year <- c(rep(df_merge_year$EMA[1],12),
+               rep(df_merge_year$EMA[2],12),
+               rep(df_merge_year$EMA[3],12),
+               rep(df_merge_year$EMA[4],12),
+               rep(df_merge_year$EMA[5],11))
+temp_diff <- temp_year - df_merge_month$EMA
+
+PCO2_sw_T <- df_merge_month$PCO2_sw * (exp(0.0423 * temp_diff))
+
+df_merge_month <- cbind(df_merge_month,temp_diff,PCO2_sw_T)
+rm(temp_year,temp_diff,PCO2_sw_T)
+
+
+#### XXXXXX #####
 #### MONTHLY TIME SCALE - Partitioning monsoon & analysis ####
 
 NEM <- selectByDate(df_merge_month, month = c(12,1,2,3))
@@ -1401,18 +1502,6 @@ rm(plot_1,plot_2)
 #FTM_date <- selectByDate(df_merge_month, month = c(10))[,1]
 #STM_date <- selectByDate(df_merge_month, month = c(4))[,1]
 
-#### Precipitation ####
-## Cumulative Rainfall, 2015, 2016, 2017 and 2018 Jan-March no data for rainfall
-library(lubridate)
-library(openair)
-rain_c <- selectByDate(df,year = 2018)[,c(1,14)]
-rain_2018 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
-                       data=rain_c,FUN=sum)
-rain_c <- selectByDate(df,year = 2019)[,c(1,14)]
-rain_2019 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
-                       data=rain_c,FUN=sum)
-rain_c <- selectByDate(df,year = 2020)[,c(1,14)]
-rain_2020 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
-                       data=rain_c,FUN=sum)
+
 
 
