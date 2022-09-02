@@ -267,7 +267,7 @@ df_merge_month <- merge(df_month, df_sat_month, by = "date")
 df_merge_year <- merge(df_year, df_sat_year, by = "date")
 
 # Random Filter after merge
-df_merge_month$CHL[df_merge_month$CHL > 10] <- NA
+df_merge_month$CHL[df_merge_month$CHL > 20] <- NA
 df_merge_month$TS[df_merge_month$TS > 34] <- NA
 
 rm(df_biomet, df_ec)
@@ -306,6 +306,8 @@ PCO2_sw_T <- df_merge_month$PCO2_sw * (exp(0.0423 * temp_diff))
 df_merge_month <- cbind(df_merge_month,temp_diff,PCO2_sw_T)
 rm(temp_year,temp_diff,PCO2_sw_T)
 
+# Average to 1 year, again.
+df_merge_year_from_month <- timeAverage(df_merge_month, avg.time = '1 year')
 
 #### XXXXXX #####
 #### MONTHLY TIME SCALE - Partitioning monsoon & analysis ####
@@ -1612,6 +1614,39 @@ df_socat <- merge(df,socat,by='date')
 
 
 
+#### Takahashi (2002) verification ####
+plot(df_merge_month$date,df_merge_month$PCO2_sw,type='l',lwd=2)
+lines(df_merge_month$date,df_merge_month$PCO2_sw_T,col='blue',lwd=2)
+
+
+##### PCO2 vs TS ####
+
+# The water temperature used for the calculation of the normalized PCO2 
+# was TS in EMA.
+plot(df_merge_month$TS,df_merge_month$PCO2_sw,pch=19)
+points(df_merge_month$TS,df_merge_month$PCO2_sw_T,col='blue',pch=19)
+
+lm_PCO2_sw <- lm(PCO2_sw ~ TS, data = df_merge_month)
+cor.test(df_merge_month$TS, df_merge_month$PCO2_sw)
+summary(lm_PCO2_sw)
+
+lm_PCO2_sw_T <- lm(PCO2_sw_T ~ TS, data = df_merge_month)
+cor.test(df_merge_month$TS, df_merge_month$PCO2_sw_T)
+summary(lm_PCO2_sw_T)
+
+
+##### PCO2 vs SST ####
+
+plot(df_merge_month$SST,df_merge_month$PCO2_sw,pch=19)
+points(df_merge_month$SST,df_merge_month$PCO2_sw_T,col='blue',pch=19)
+
+lm_PCO2_sw <- lm(PCO2_sw ~ SST, data = df_merge_month)
+cor.test(df_merge_month$SST, df_merge_month$PCO2_sw)
+summary(lm_PCO2_sw)
+
+lm_PCO2_sw_T <- lm(PCO2_sw_T ~ SST, data = df_merge_month)
+cor.test(df_merge_month$SST, df_merge_month$PCO2_sw_T)
+summary(lm_PCO2_sw_T)
 
 
 
