@@ -310,7 +310,14 @@ rm(temp_year,temp_diff,PCO2_sw_T)
 df_merge_year_from_month <- timeAverage(df_merge_month, avg.time = '1 year')
 
 #### XXXXXX #####
-#### MONTHLY TIME SCALE - Partitioning monsoon & analysis ####
+
+#### 30-MIN TIMESCALE ####
+NEM_30 <- selectByDate(df, month = c(12,1,2,3))
+SWM_30 <- selectByDate(df, month = c(6,7,8,9))
+FTM_30 <- selectByDate(df, month = c(10,11))
+STM_30 <- selectByDate(df, month = c(4,5))
+
+#### MONTHLY TIMESCALE - Partitioning monsoon & analysis ####
 
 NEM <- selectByDate(df_merge_month, month = c(12,1,2,3))
 SWM <- selectByDate(df_merge_month, month = c(6,7,8,9))
