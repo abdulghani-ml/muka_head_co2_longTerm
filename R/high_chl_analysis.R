@@ -65,5 +65,5 @@ abline(v = as.POSIXct("2020-02-25 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty 
 abline(v = as.POSIXct("2020-02-25 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
 abline(h=0)
 
-1 + 1
+1 + 2
 
