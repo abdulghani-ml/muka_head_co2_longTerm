@@ -85,7 +85,7 @@ df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
 #### EC DATA ANALYSIS ####
 
 ### Import EC data ######
-df_ec<-read.csv('data/station/MCO-MUKA21_full_output copy.csv')
+df_ec<-read.csv('data/station/MCO-MUKA21_full_output.csv')
 df_biomet<- read.csv('data/station/biomet data 21.csv')
 
 # Delete unnecessary columns and rows in EC data files
@@ -134,7 +134,7 @@ df <- data.frame(df$date,df$DOY,df$WS,df$WD,
                  df$P_RAIN_1_1_1,df$TA_1_1_1,df$ET,
                  df$PPFD_1_1_1,df$USTAR,df$RG_1_1_1,
                  df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC,
-                 df$CO2,df$PA,df$Correlation)
+                 df$CO2,df$PA)
 
 
 #Rename variables
@@ -143,7 +143,7 @@ colnames(df) <- c("date","DOY","WS","WD",
                   "H","LE","ZL","SH","SLE",
                   "P_RAIN","TA","ET","PPFD",
                   "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC",
-                  "co2_mole_fraction", "air_pressure","correlation")
+                  "co2_mole_fraction", "air_pressure")
 
 # Convert TA, TS from K to Celcius
 df$TA<- df$TA - 273.15
@@ -153,7 +153,7 @@ df$TS<- df$TS - 273.15
 # Remove FCO2 values that do not follow 
 # the MG1999 parameterization equation
 
-df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
+df$FCO2[df$FCO2 > 0.2 | df$FCO2 < -0.2] <- NA
 
 #### Convert FCO2 from micro-mole per second to milli-mole per day ####
 
@@ -183,7 +183,6 @@ df$H[which(df$H_QC == 2)] <- NA
 df$FCO2[which(df$FCO2_QC == 2)] <- NA
 df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
 
-df$FCO2[which(df$correlation <= -0.7)] <- NA
 
 
 
