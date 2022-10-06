@@ -13,7 +13,9 @@ df_hour <- df %>%
             TA = mean(TA,na.rm=TRUE), PPFD = mean(PPFD,na.rm=TRUE), USTAR = mean(USTAR,na.rm=TRUE),
             TS = mean(TS,na.rm=TRUE), co2_mole_fraction = mean(co2_mole_fraction,na.rm=TRUE),
             air_pressure = mean(air_pressure,na.rm=TRUE), FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE),
-            EMA = mean(EMA,na.rm=TRUE), PCO2_sw = mean(PCO2_sw,na.rm=TRUE))
+            EMA = mean(EMA,na.rm=TRUE), PCO2_sw = mean(PCO2_sw,na.rm=TRUE),
+            residCO2 = mean(residCO2,na.rm = T))
+
 ##### NEM ####
 NEM_hour <- NEM_30 %>% 
   group_by(hour=format(as.POSIXlt(cut(date,breaks='hour')),'%H')) %>%
