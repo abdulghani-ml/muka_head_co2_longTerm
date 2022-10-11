@@ -615,5 +615,302 @@ abline(v = as.POSIXct("2018-03-31 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty 
 abline(h=0)
 
 
+# Pick one day. I picked 2018-03-15.
+high_chl_day41 <- selectByDate(df, start = "15/3/2018", end = "15/3/2018")
+plot(high_chl_day41$date,high_chl_day41$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-03-15',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-03-15 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-03-15 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day41$date,high_chl_day41$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-03-15 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-03-15 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2018-02-20.
+high_chl_day42 <- selectByDate(df, start = "20/2/2018", end = "20/2/2018")
+plot(high_chl_day42$date,high_chl_day42$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-20',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-20 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-20 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day42$date,high_chl_day42$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-20 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-20 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2018-02-180.
+high_chl_day43 <- selectByDate(df, start = "18/2/2018", end = "18/2/2018")
+plot(high_chl_day43$date,high_chl_day43$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-18',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-18 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-18 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day43$date,high_chl_day43$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-18 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-18 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2018-02-13.
+high_chl_day44 <- selectByDate(df, start = "13/2/2018", end = "13/2/2018")
+plot(high_chl_day44$date,high_chl_day44$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-13',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-13 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-13 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day44$date,high_chl_day44$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-13 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-13 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2018-02-11.
+high_chl_day45 <- selectByDate(df, start = "11/2/2018", end = "11/2/2018")
+plot(high_chl_day45$date,high_chl_day45$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-11',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-11 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-11 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day45$date,high_chl_day45$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-11 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-11 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2018-02-10.
+high_chl_day46 <- selectByDate(df, start = "10/2/2018", end = "10/2/2018")
+plot(high_chl_day46$date,high_chl_day46$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-10',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-10 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-10 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day46$date,high_chl_day46$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-10 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-10 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2018-02-09.
+high_chl_day47 <- selectByDate(df, start = "9/2/2018", end = "9/2/2018")
+plot(high_chl_day47$date,high_chl_day47$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-09',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-09 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-09 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day47$date,high_chl_day47$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-09 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-09 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2018-02-06.
+high_chl_day48 <- selectByDate(df, start = "6/2/2018", end = "6/2/2018")
+plot(high_chl_day48$date,high_chl_day48$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-02-06',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-02-06 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-02-06 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day48$date,high_chl_day48$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-02-06 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-02-06 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2018-01-19.
+high_chl_day49 <- selectByDate(df, start = "19/1/2018", end = "19/1/2018")
+plot(high_chl_day49$date,high_chl_day49$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2018-01-19',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2018-01-19 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2018-01-19 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day49$date,high_chl_day49$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2018-01-19 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2018-01-19 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-12-27.
+high_chl_day50 <- selectByDate(df, start = "27/12/2017", end = "27/12/2017")
+plot(high_chl_day50 $date,high_chl_day50 $FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-12-27',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-12-27 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-12-27 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day50 $date,high_chl_day50 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-12-27 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-12-27 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2017-12-25.
+high_chl_day51 <- selectByDate(df, start = "25/12/2017", end = "25/12/2017")
+plot(high_chl_day51 $date,high_chl_day51 $FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-12-25',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-12-25 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-12-25 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day51 $date,high_chl_day51 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-12-25 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-12-25 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+
+# Pick one day. I picked 2017-12-18.
+high_chl_day52 <- selectByDate(df, start = "18/12/2017", end = "18/12/2017")
+plot(high_chl_day52 $date,high_chl_day52 $FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-12-18',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-12-18 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-12-18 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day52 $date,high_chl_day52 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-12-18 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-12-18 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-12-11.
+high_chl_day53 <- selectByDate(df, start = "11/12/2017", end = "11/12/2017")
+plot(high_chl_day53 $date,high_chl_day53 $FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-12-11',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-12-11 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-12-11 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day53 $date,high_chl_day53 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-12-11 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-12-11 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-12-08.
+high_chl_day54 <- selectByDate(df, start = "8/12/2017", end = "8/12/2017")
+plot(high_chl_day54 $date,high_chl_day54 $FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-12-08',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-12-08 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-12-08 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day54 $date,high_chl_day54 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-12-08 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-12-08 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-03-10.
+high_chl_day55<- selectByDate(df, start = "10/3/2017", end = "10/3/2017")
+plot(high_chl_day55 $date,high_chl_day55$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-03-10',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-03-10 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-03-10 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day55 $date,high_chl_day55 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-03-10 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-03-10 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-02-17.
+high_chl_day56<- selectByDate(df, start = "17/2/2017", end = "17/2/2017")
+plot(high_chl_day56 $date,high_chl_day56$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-02-17',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-02-17 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-02-17 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day56 $date,high_chl_day56 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-02-17 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-02-17 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2017-02-16.
+high_chl_day57<- selectByDate(df, start = "16/2/2017", end = "16/2/2017")
+plot(high_chl_day57 $date,high_chl_day57$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2017-02-16',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2017-02-16 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2017-02-16 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day57 $date,high_chl_day57 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2017-02-16 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2017-02-16 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2016-02-01.
+high_chl_day58<- selectByDate(df, start = "1/2/2016", end = "1/2/2016")
+plot(high_chl_day58 $date,high_chl_day58$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2016-02-01',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2016-02-01 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2016-02-01 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day58 $date,high_chl_day58 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2016-02-01 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2016-02-01 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+
+# Pick one day. I picked 2016-01-05.
+high_chl_day59<- selectByDate(df, start = "5/1/2016", end = "5/1/2016")
+plot(high_chl_day59 $date,high_chl_day59$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2016-01-05',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2016-01-05 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2016-01-05 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day59 $date,high_chl_day59 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2016-01-05 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2016-01-05 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2016-01-04.
+high_chl_day60<- selectByDate(df, start = "4/1/2016", end = "4/1/2016")
+plot(high_chl_day60 $date,high_chl_day60$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2016-01-04',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2016-01-04 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2016-01-04 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(high_chl_day60 $date,high_chl_day60 $PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2016-01-04 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2016-01-04 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
 
 
