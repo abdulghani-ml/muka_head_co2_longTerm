@@ -644,7 +644,7 @@ abline(v = as.POSIXct("2018-02-20 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty 
 abline(v = as.POSIXct("2018-02-20 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
 abline(h=0)
 
-# Pick one day. I picked 2018-02-180.
+# Pick one day. I picked 2018-02-18.
 high_chl_day43 <- selectByDate(df, start = "18/2/2018", end = "18/2/2018")
 plot(high_chl_day43$date,high_chl_day43$FCO2, pch=19, type = 'o',
      xlab = 'Time',
@@ -911,6 +911,114 @@ lines(high_chl_day60 $date,high_chl_day60 $PPFD/10000,col='green', lwd=2)
 abline(v = as.POSIXct("2016-01-04 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
 abline(v = as.POSIXct("2016-01-04 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
 abline(h=0)
+
+#### Dec 2019 ####
+# Pick one day. I picked 2019-12-01.
+dec_day1<- selectByDate(df, start = "1/12/2019", end = "1/12/2019")
+plot(dec_day1$date,dec_day1$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2019-12-01',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2019-12-01 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2019-12-01 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(dec_day1$date,dec_day1$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2019-12-01 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2019-12-01 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2019-12-02.
+dec_day2<- selectByDate(df, start = "2/12/2019", end = "2/12/2019")
+plot(dec_day2$date,dec_day2$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2019-12-02',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2019-12-02 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2019-12-02 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(dec_day2$date,dec_day2$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2019-12-02 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2019-12-02 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2019-12-03.
+dec_day3<- selectByDate(df, start = "3/12/2019", end = "3/12/2019")
+plot(dec_day3$date,dec_day3$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2019-12-03',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2019-12-03 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2019-12-03 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(dec_day3$date,dec_day3$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2019-12-03 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2019-12-03 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+# Pick one day. I picked 2019-12-04.
+dec_day4<- selectByDate(df, start = "4/12/2019", end = "4/12/2019")
+plot(dec_day4$date,dec_day4$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2019-12-04',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2019-12-04 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2019-12-04 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(dec_day4$date,dec_day4$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2019-12-04 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2019-12-04 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+# Pick one day. I picked 2019-12-05.
+dec_day4<- selectByDate(df, start = "4/12/2019", end = "4/12/2019")
+plot(dec_day4$date,dec_day4$FCO2, pch=19, type = 'o',
+     xlab = 'Time',
+     ylab = 'FCO2',
+     main = '2019-12-04',
+     ylim = c(-0.5,0.5), 
+     xlim =c(as.POSIXct("2019-12-04 00:01:00", format = "%Y-%m-%d %H:%M:%S"),
+             as.POSIXct("2019-12-04 23:59:00", format = "%Y-%m-%d %H:%M:%S")))
+lines(dec_day4$date,dec_day4$PPFD/10000,col='green', lwd=2)
+abline(v = as.POSIXct("2019-12-04 07:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(v = as.POSIXct("2019-12-04 19:00:00", format = "%Y-%m-%d %H:%M:%S"), lty = 2)
+abline(h=0)
+
+
+
+# Pick one day. I picked 2019-12-05.
+
+##### all date ####
+month <- "1"
+year <- "2020"
+
+for (day in 1:31) {
+  day <- as.character(day)
+  
+  
+  str_date <- paste0(day,'/',month,'/',year)
+  
+  daily_co2 <- selectByDate(df, start = str_date, end = str_date)
+  
+  plot(daily_co2$date,daily_co2$FCO2, pch=19, type = 'o',
+       xlab = 'Time',
+       ylab = 'FCO2',
+       main = str_date,
+       ylim = c(-0.5,0.5), 
+       xlim =c(as.POSIXct(paste(str_date,"00:01:00"), format = "%d/%m/%Y %H:%M:%S"),
+               as.POSIXct(paste(str_date,"23:59:00"), format = "%d/%m/%Y %H:%M:%S")))
+  lines(daily_co2$date,daily_co2$PPFD/10000,col='green', lwd=2)
+  abline(v = as.POSIXct(paste(str_date,"07:00:00"), format = "%d/%m/%Y %H:%M:%S"), lty = 2)
+  abline(v = as.POSIXct(paste(str_date,"19:00:00"), format = "%d/%m/%Y %H:%M:%S"), lty = 2)
+  abline(h=0)
+}
+  
+
+
+
+
+
+
 
 
 
