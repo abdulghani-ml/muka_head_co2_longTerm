@@ -34,14 +34,21 @@ source('R/tools/tool_trapezium_intg_3.R')
 source('R/tools/f2pCO2.R')
 
 #### SATELLITE DATA ANALYSIS ####
-#### import sat data ###############
+#### Import sat data ###############
 chl <- read.csv('data/satellite/5year_chlor_Aqua.csv')
 sst <- read.csv('data/satellite/5year_SST_Aqua.csv')
 poc <- read.csv('data/satellite/5year_POC_Aqua.csv')
 pic <- read.csv('data/satellite/5year_PIC_Aqua.csv')
 par <- read.csv('data/satellite/5year_PAR_Aqua.csv')
 
-#### merge variables sat data #####
+wave <-read.csv('data/station/DWave.csv')
+# Wave Data (wave)
+date <- as.POSIXct(wave$time1, format = "%d/%m/%Y %H:%M", tz = "Asia/Kuala_Lumpur")
+wave <- cbind(date,wave)
+wave <- wave[,-5]
+wave_30 <- timeAverage(wave,avg.time = "30 min")
+
+#### Merge variables sat data #####
 #df1 <- merge(chl,sst,par,poc,pic,by= c('DATE'),all=TRUE)
 
 x1<- merge(chl,sst)
@@ -55,7 +62,7 @@ rm(chl,par,pic,poc,sst,x1,x2,x3)
 df_sat$DATE <- gsub("T"," ", df_sat$DATE)         # This is to remove the letter T
 df_sat$DATE <- strptime(df_sat$DATE, 
                         format = "%Y-%m-%d %H:%M:%OS", 
-                        tz = "Asia/Kuala_Lumpur")
+                        tz = "Europe/London")
 #class (df_sat$DATE)                              #To check the format, make sure is POSIXlt POSIXt
 df_sat$DATE <- as.POSIXct.POSIXlt(df_sat$DATE)    #Change to POSIXct format
 
@@ -100,6 +107,9 @@ df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unamed)
 colnames(df_ec)[1] <- "DATE"
 colnames(df_biomet)[7] <- "DATE"
 
+df_biomet$DATE <- strptime(df_biomet$DATE, format="%Y-%m-%d %H:%M", tz='Asia/Kuala_Lumpur')
+df_ec$DATE <- strptime(df_ec$DATE, format="%Y-%m-%d %H:%M", tz='Asia/Kuala_Lumpur')
+
 #### Merge df with df_bimet ####
 df <- merge(df_ec,df_biomet,by= c('DATE'))
 
@@ -128,12 +138,13 @@ df$DATE <- as.POSIXct.POSIXlt(df$DATE)
 colnames(df)[1] <- "date"
 
 # extracting related variables from raw variables
+df_all <- df
 df <- data.frame(df$date,df$DOY,df$WS,df$WD,
                  df$FCO2,df$RN_1_1_1,df$RH_1_1_1,df$H2O,
                  df$H,df$LE,df$ZL,df$SH,df$SLE,
                  df$P_RAIN_1_1_1,df$TA_1_1_1,df$ET,
                  df$PPFD_1_1_1,df$USTAR,df$RG_1_1_1,
-                 df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC,
+                 df$TS_1_1_1,df$H_QC,df$LE_QC,df$FCO2_QC,df$TAU_QC,
                  df$CO2,df$PA,df$Correlation)
 
 
@@ -142,24 +153,39 @@ colnames(df) <- c("date","DOY","WS","WD",
                   "FCO2","RN","RH","H2O",
                   "H","LE","ZL","SH","SLE",
                   "P_RAIN","TA","ET","PPFD",
-                  "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC",
+                  "USTAR","RG","TS","H_QC","LE_QC","FCO2_QC","TAU_QC",
                   "co2_mole_fraction", "air_pressure","correlation")
 
 # Convert TA, TS from K to Celcius
 df$TA<- df$TA - 273.15
 df$TS<- df$TS - 273.15
 
-
-# Remove FCO2 values that do not follow 
-# the MG1999 parameterization equation
-
-df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
-
 #### Convert FCO2 from micro-mole per second to milli-mole per day ####
-
 FCO2_mmol <- df$FCO2 * 86.4
 df <- cbind(df, FCO2_mmol)
 rm(FCO2_mmol)
+
+
+df$LE[which(df$LE_QC == 2)] <- NA 
+
+df$H[which(df$H_QC == 2)] <- NA 
+
+df$FCO2[which(df$FCO2_QC == 2)] <- NA
+#df$FCO2[which(df$FCO2_QC == 1)] <- NA       # Stricter QC
+
+df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
+#df$FCO2_mmol[which(df$FCO2_QC == 1)] <- NA       # Stricter QC
+
+df$TAU_QC[which(df$TAU_QC == 2)] <- NA
+##### Remove FCO2 from land ######
+
+df$FCO2[df$WD > 45 & df$WD < 315] <- NA
+df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
+df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
+
+# Remove FCO2 values that are too high or low.
+df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
+
 
 # Remove all improbable values of T
 df$TA[which(df$TA < 0 | df$TA > 100 )] <- NA
@@ -176,35 +202,20 @@ df$RN[df$RN < -100] <- NA
 
 df$RN[df$RN > 400] <- NA
 
-df$LE[which(df$LE_QC == 2)] <- NA 
+df$WS[df$WS > 100] <- NA
 
-df$H[which(df$H_QC == 2)] <- NA 
+df$ZL[abs(df$ZL)>10] <- NA
 
-df$FCO2[which(df$FCO2_QC == 2)] <- NA
-df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
+df$P_RAIN[df$P_RAIN > 0.1 | df$P_RAIN < 0] <- NA
 
-df$FCO2[which(df$correlation <= -0.7)] <- NA
+df$USTAR[which(df$USTAR > 10)] <- NA
 
+#df$FCO2[which(df$correlation <= -0.7)] <- NA
 
-
-##### Remove FCO2 from land ######
-
-df$FCO2[df$WD > 45 & df$WD < 315] <- NA
-df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
-df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
-
-# Calculation of partial pressure of CO2 in air (Pa)
-# mole fraction (mol/mol) = partial pressure(Pa)/ total pressure(Pa)
-# convert Pa to kPa = 1 Pa * 0.001
-# convert mole fraction in ppm to mol/mol (1 ppm * 10^-6)
-PP_air_30 <- NA
-co2_mF_30 <- df$co2_mole_fraction * 10^-6  # convert into mol/mol
-PP_air_30 <- co2_mF_30 * df$air_pressure
-PP_air_30 <- PP_air_30 * 0.001 # convert to kPa
-# convert PP_air into micro-atm
-PP_air_30 <- (PP_air_30/101.325) * 10^6
-df <- cbind(df, PP_air_30)
-rm(PP_air_30,co2_mF_30)
+#### Calculate CD and add to df ####
+CD <- (df$USTAR/df$WS)^2
+df <- cbind(df,CD)
+rm(CD)
 
 ##### Add TS EMA data ####
 
@@ -220,6 +231,99 @@ ts_ema <- ts_ema[,-c(2,3)]
 df <- merge(df, ts_ema, by = "date")
 rm(ts_ema)
 
+##### Add TA EMA data ####
+
+TA_ema <- read.csv('data/station/TA_ema.csv')
+TA_ema$date <- as.character(TA_ema$date)
+date <- strptime(TA_ema$date, 
+                 format = "%d/%m/%Y %H:%M", 
+                 tz = "Asia/Kuala_Lumpur")
+TA_ema <- cbind(date, TA_ema)
+colnames(TA_ema)[4] <- 'TA_ema'
+TA_ema <- TA_ema[,-c(2,3)]
+
+df <- merge(df, TA_ema, by = "date")
+rm(TA_ema)
+
+##### Add RH EMA data ####
+
+RH_ema <- read.csv('data/station/RH_ema.csv')
+RH_ema$date <- as.character(RH_ema$date)
+date <- strptime(RH_ema$date, 
+                 format = "%d/%m/%Y %H:%M", 
+                 tz = "Asia/Kuala_Lumpur")
+RH_ema <- cbind(date, RH_ema)
+colnames(RH_ema)[4] <- 'RH_ema'
+RH_ema <- RH_ema[,-c(2,3)]
+
+df <- merge(df, RH_ema, by = "date")
+rm(RH_ema)
+
+#### Add deltaT (original data) ####
+
+delT <- df$TS - df$TA
+df <- cbind(df,delT)
+rm(delT)
+
+#### Add delT (EMA-filtered data) ####
+
+delT_ema <- df$EMA - df$TA_ema
+df <- cbind(df,delT_ema)
+rm(delT_ema)
+
+# Calculation of partial pressure of CO2 in air (Pa)
+# mole fraction (mol/mol) = partial pressure(Pa)/ total pressure(Pa)
+# convert Pa to kPa = 1 Pa * 0.001
+# convert mole fraction in ppm to mol/mol (1 ppm * 10^-6)
+PP_air_30 <- NA
+co2_mF_30 <- df$co2_mole_fraction * 10^-6  # convert into mol/mol
+PP_air_30 <- co2_mF_30 * df$air_pressure
+PP_air_30 <- PP_air_30 * 0.001 # convert to kPa
+# convert PP_air into micro-atm
+PP_air_30 <- (PP_air_30/101.325) * 10^6
+df <- cbind(df, PP_air_30)
+rm(PP_air_30,co2_mF_30)
+
+
+#### Salinity data import into sat data ####
+df_salinity <- read.csv('data/station/salinity.csv',sep = ',')
+
+df_salinity$date <- as.POSIXct(df_salinity$date,"%d/%m/%Y %H:%M",tz='Asia/Kuala_Lumpur')
+
+df_salinity_temp <- timeAverage(df_salinity, avg.time = "hour")
+
+# Reusing Sat Data
+df_sat_temp <- timeAverage(df_sat,avg.time = "1 hour")
+
+date <- df_sat_temp$date
+
+date <- format(round(date, units="hours"), format="%Y-%m-%d %H:%M:%S")
+
+date <- as.POSIXct(date,"%Y-%m-%d %H:%M:%S", tz='Asia/Kuala_Lumpur')
+
+df_sat_temp <- cbind(date,df_sat_temp)
+
+df_sat_temp <- df_sat_temp[,-2]
+
+df_sat_temp <- timeAverage(df_sat_temp,avg.time = "1 hour")
+
+# Merge the salinity and sat data
+df_salinity_sat <- merge(df_salinity_temp,df_sat_temp,by=c('date'))
+
+df_salinity_sat <- timeAverage(df_temp, avg.time='month')
+
+##### Calculate solubility using the Weiss (1974) equation ####
+solub <- solubility(df_temp$SST,df_temp$salinity)
+# Merging calculated solubility data into salinity and sat data
+df_salinity_sat <- cbind(df_salinity_sat,solub)
+
+
+# Some housekeeping
+rm(df_salinity_temp, df_sat_temp, date,solub)
+
+
+
+#### CO2 partial pressure calculations ####
 ##### 30-min CO2 seawater solubility ####
 
 # Solubility of CO2 in seawater
