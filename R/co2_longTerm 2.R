@@ -186,12 +186,16 @@ df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
 df$FCO2[which(df$correlation <= -0.7)] <- NA
 
 
+df$WS[which(df$WS < 0 | df$WS > 5 )] <- NA
 
 ##### Remove FCO2 from land ######
 
 df$FCO2[df$WD > 45 & df$WD < 315] <- NA
 df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
 df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
+WDsin <- sin(df$WD * pi/180)
+
+df <- cbind(df,WDsin)
 
 # Calculation of partial pressure of CO2 in air (Pa)
 # mole fraction (mol/mol) = partial pressure(Pa)/ total pressure(Pa)
@@ -278,7 +282,7 @@ df_merge_month$month <- months(df_merge_month$date)
 # Create Year Variable
 df_merge_month$year <- format(df_merge_month$date,"%Y")
 
-
+df_merge_day2<- 
 #### Calculating daily cumulative precipitation ####
 ## Cumulative Rainfall, 2015, 2016, 2017 and 2018 Jan-March no data for rainfall
 

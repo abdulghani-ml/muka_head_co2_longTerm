@@ -2,19 +2,24 @@
 ##### partition of date #####
 library(openair)
 
-marchf <- selectByDate(df_merge_day,month = 3)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Febf <- selectByDate(df_merge_day,month = 2)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Janf <- selectByDate(df_merge_day,month = 1)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Novf <- selectByDate(df_merge_day,month = 11)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Decf <- selectByDate(df_merge_day,month = 12)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Julyf <- selectByDate(df_merge_day,month = 7)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Aprf <- selectByDate(df_merge_day,month = 4)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Mayf <- selectByDate(df_merge_day,month = 5)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Junf <- selectByDate(df_merge_day,month = 6)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Augf <- selectByDate(df_merge_day,month = 8)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Sepf <- selectByDate(df_merge_day,month = 9)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
-Octf <- selectByDate(df_merge_day,month = 10)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31)]
+marchf <- selectByDate(df_merge_day,month = 3)[c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Febf <- selectByDate(df_merge_day,month = 2)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Janf <- selectByDate(df_merge_day,month = 1)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Novf <- selectByDate(df_merge_day,month = 11)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Decf <- selectByDate(df_merge_day,month = 12)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Julyf <- selectByDate(df_merge_day,month = 7)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Aprf <- selectByDate(df_merge_day,month = 4)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Mayf <- selectByDate(df_merge_day,month = 5)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Junf <- selectByDate(df_merge_day,month = 6)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Augf <- selectByDate(df_merge_day,month = 8)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Sepf <- selectByDate(df_merge_day,month = 9)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
+Octf <- selectByDate(df_merge_day,month = 10)[,c(1,2,3,4,5,8,9,15,17,18,20,27,31,32,33)]
 
+
+df_NEM <- rbind(Decf,Janf, Febf,marchf)
+df_SWM <- rbind(Junf,Julyf,Augf,Sepf)
+df_FTM <- rbind(Octf,Novf)
+df_STM <- rbind(Aprf,Mayf)
 
 #### WD filter ####
 df$WD[df$WD > 45 & df$WD < 315] <- NA
@@ -23,31 +28,9 @@ WDsin <- sin(df$WD * pi/180)
 
 df <- cbind(df,WDsin)
 
+df$WS[which(df$WS < 0 | df$WS > 5 )] <- NA
 
 
-##### add chl to the data #####
-CHL_day <- selectByDate(df_sat)[,c(1,4)]
-
-CHL_day$date <- strptime(CHL_day$date, 
-                         format = "%Y-%m-%d", 
-                         tz = "Asia/Kuala_Lumpur")
-CHL_day$date <- as.POSIXct.POSIXlt(CHL_day$date)
-
-
-SST_DAY_SAT <-selectByDate(df_sat)[,c(1,5)]
-SST_DAY_SAT$date <- strptime(SST_DAY_SAT$date,format ="%Y-%m-%d", 
-                             tz = "Asia/Kuala_Lumpur")
-SST_DAY_SAT$date <- as.POSIXct.POSIXlt(SST_DAY_SAT$date)
-df_merge_day <- merge(df_day,CHL_day, by= "date")
-df_merge_day <- merge(df_merge_day,SST_DAY_SAT, by= "date")
-df_merge_day$CHL[which(df_merge_day$CHL> 7)] <- NA
-
-
-#### Daily Averaged FCO2 for Feb and Mar ...... ####
-df_Dec_jan_feb <- rbind(Decf, Janf, Febf)
-df_feb_mar <- rbind(Febf,marchf)
-df_JUL_AUG <- rbind(Julyf,Augf)
-df_jan_Dec<- rbind(Decf, Janf)
 ##### plot #####
 library(ggplot2)
 
@@ -167,6 +150,8 @@ ggplot(Febf, aes(DOY,FCO2_mmol)) + geom_point(alpha = 0.3) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   theme_bw()
 dev.off()
+
+
 ##### PLOT all days of year ####
 jpeg(filename='figs/all yearFCO2mmol&DOY.jpg', unit = 'cm', width = 15, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
@@ -254,7 +239,7 @@ jpeg(filename='figs/day jan_FCO2MMOL.jpg', unit = 'cm', width = 15, height = 10,
 par(mar=c(4,4,1,1),xpd=FALSE)
 ggplot(Jan2020, aes(date,Jan2020$FCO2)) + geom_point(alpha = 0.1) + 
   geom_smooth(col = 'green', alpha = 0.2) +
-  coord_cartesian(,ylim = c(-0.05,0.05))+
+  coord_cartesian(ylim = c(-0.05,0.05))+
   theme_bw()
 dev.off()
 
@@ -594,20 +579,20 @@ jpeg(filename='figs/jan_jun_TS.jpg', unit = 'cm', width = 15, height = 10, res =
 par(mar=c(4,4,1,1),xpd=FALSE)
 
 ggplot(df_hour_jan, aes(hour,TS)) + geom_point(alpha = 0.2) + 
-  geom_smooth(col = 'green', alpha = 0.2) +
+  geom_smooth(col = 'red', alpha = 0.2) +
   geom_point(data = df_hour_jun, aes(as.integer(hour), TS), alpha =0.2) +
-  geom_smooth(data = df_hour_jun, aes(as.integer(hour), TS), col= "red", alpha = 0.2) +
+  geom_smooth(data = df_hour_jun, aes(as.integer(hour), TS), col= "blue", alpha = 0.2) +
   theme_bw()
 
 dev.off()
 
-jpeg(filename='figs/jan_jun_wS.jpg', unit = 'cm', width = 15, height = 10, res = 360)
+jpeg(filename='figs/jan_jun_wS2.jpg', unit = 'cm', width = 15, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
 
 ggplot(df_hour_jan, aes(hour,WS)) + geom_point(alpha = 0.2) + 
-  geom_smooth(col = 'green', alpha = 0.2) +
+  geom_smooth(col = 'red', alpha = 0.2) +
   geom_point(data = df_hour_jun, aes(as.integer(hour), WS), alpha =0.2) +
-  geom_smooth(data = df_hour_jun, aes(as.integer(hour), WS), col= "red", alpha = 0.2) +
+  geom_smooth(data = df_hour_jun, aes(as.integer(hour), WS), col= "blue", alpha = 0.2) +
   theme_bw()
 
 dev.off()
@@ -617,9 +602,9 @@ jpeg(filename='figs/jan_jun_FCO2MMOL.jpg', unit = 'cm', width = 15, height = 10,
 par(mar=c(4,4,1,1),xpd=FALSE)
 
 ggplot(df_hour_jan, aes(hour,FCO2_mmol)) + geom_point(alpha = 0.2) + 
-  geom_smooth(col = 'green', alpha = 0.2) +
+  geom_smooth(col = 'red', alpha = 0.2) +
   geom_point(data = df_hour_jun, aes(as.integer(hour), FCO2_mmol), alpha =0.2) +
-  geom_smooth(data = df_hour_jun, aes(as.integer(hour), FCO2_mmol), col= "red", alpha = 0.2) +
+  geom_smooth(data = df_hour_jun, aes(as.integer(hour), FCO2_mmol), col= "blue", alpha = 0.2) +
   geom_hline(yintercept=0, linetype="dashed", color = "black")+
   theme_bw()
 
@@ -628,8 +613,69 @@ dev.off()
 df_hour_jan1 <- df_hour_jan[1:7,]
 df_hour_jun1 <- df_hour_jun[1:7,]
 
+jpeg(filename='figs/jan_jun_WDsin.jpg', unit = 'cm', width = 15, height = 10, res = 360)
+par(mar=c(4,4,1,1),xpd=FALSE)
 ggplot(df_hour_jan, aes(hour,WDsin)) + geom_point(alpha = 0.2) + 
-  geom_smooth(col = 'green', alpha = 0.2) 
+  geom_smooth(col = 'red', alpha = 0.2) +
+  geom_point(data = df_hour_jun, aes(hour,WDsin), alpha =0.2) +
+  geom_smooth(data = df_hour_jun, aes(hour,WDsin), col= "blue", alpha = 0.2) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black")+
+  theme_bw()
+dev.off()
 
-ggplot(df_hour_jun, aes(hour,WDsin)) + geom_point(alpha = 0.2) + 
-  geom_smooth(col = 'green', alpha = 0.2) 
+
+#### mean and sd #####
+mean_df_day  <- sapply(na.omit(df_merge_day[c(3,4,5,7,15,20,27,31,32,33)]), mean)
+sd_df_day <- sapply(na.omit(df_merge_day[c(3,4,5,7,15,20,27,31,32,33)]), sd)
+df_statistic_day <- data.frame(rbind(mean_df_day,sd_df_day))
+row.names(df_statistic_day) <- c("Mean","SD")
+
+mean_df_jan  <- sapply(na.omit(Janf[c(3,4,5,8,11,12,13,14,15)]), mean)
+sd_df_jan <- sapply(na.omit(Janf[c(3,4,5,8,11,12,13,14,15)]), sd)
+df_statistic_jan <- data.frame(rbind(mean_df_jan,sd_df_jan))
+row.names(df_statistic_jan) <- c("Mean","SD")
+
+mean_df_jun  <- sapply(na.omit(Junf[c(3,4,5,8,11,12,13,14,15)]), mean)
+sd_df_jun <- sapply(na.omit(Junf[c(3,4,5,8,11,12,13,14,15)]), sd)
+df_statistic_jun <- data.frame(rbind(mean_df_jun,sd_df_jun))
+row.names(df_statistic_jun) <- c("Mean","SD")
+
+mean_df_NEM  <- sapply(na.omit(df_NEM), mean)
+sd_df_NEM <- sapply(na.omit(df_NEM), sd)
+df_statistic_NEM<- data.frame(rbind(mean_df_NEM,sd_df_NEM))
+row.names(df_statistic_NEM) <- c("Mean","SD")
+
+mean_df_SWM  <- sapply(na.omit(df_SWM), mean)
+sd_df_SWM <- sapply(na.omit(df_SWM), sd)
+df_statistic_SWM <- data.frame(rbind(mean_df_SWM,sd_df_SWM))
+row.names(df_statistic_SWM) <- c("Mean","SD")
+
+
+install.packages("writexl")
+library(writexl)
+xlsx(df_statistic_jan, "statistic_jan.xlsx")
+######correlation daily time #####
+corPlot(df_merge_day)
+corPlot(df_NEM)
+corPlot(df_SWM)
+
+install.packages("datarium")
+library(datarium)
+df_subset <- df_merge_day[,c("FCO2_mmol","WS","CHL","TS","SST","WD")]
+cor(df_subset)
+
+pvalue_test2 <- rcorr(as.matrix(df_subset), 
+                     type = "pearson")$P
+pvalue_test2[upper.tri(pvalue_test)] <- 0
+
+pvalue_test <- rcorr(as.matrix(df_merge_day[c(27,3,32,20,15,20,33,4,18)]), 
+                     type = "pearson")$P
+pvalue_test[upper.tri(pvalue_test)] <- 0
+
+##### p-value ####
+
+library(stats)
+t.test(df_statistic_NEM$CHL,df_statistic_SWM$CHL)
+t.test(df_statistic_NEM$WS,df_statistic_SWM$WS)
+t.test(df_statistic_NEM$SST,df_statistic_SWM$SST)
+t.test(df_statistic_day$SST,df_statistic_day$TS)
