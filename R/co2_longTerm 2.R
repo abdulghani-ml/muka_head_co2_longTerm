@@ -117,7 +117,7 @@ rm(i)
 df[,-1] <- charactersNumeric(df[,-1])
 
 # To check the class
-#sapply(df,class)
+sapply(df,class)
 
 # Change the date to POSIXCT format
 df$DATE <- strptime(df$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
@@ -154,7 +154,7 @@ df$TS<- df$TS - 273.15
 # the MG1999 parameterization equation
 
 df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
-
+df$FCO2[df$FCO2 > 5 | df$FCO2 < -5] <- NA
 #### Convert FCO2 from micro-mole per second to milli-mole per day ####
 
 FCO2_mmol <- df$FCO2 * 86.4
@@ -196,6 +196,9 @@ df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
 WDsin <- sin(df$WD * pi/180)
 
 df <- cbind(df,WDsin)
+
+
+df$TS[df$TS > 34] <- NA
 
 # Calculation of partial pressure of CO2 in air (Pa)
 # mole fraction (mol/mol) = partial pressure(Pa)/ total pressure(Pa)
@@ -264,7 +267,16 @@ df_year <- timeAverage(df, avg.time = "1 year")
 
 #Average data to daily intervals
 df_day <- timeAverage(df, avg.time = "1 day")
+df_day<- df_day[which(df_day$date >= as.POSIXct(as.Date("2016-01-01")) 
+                      & df_day$date <= as.POSIXct(as.Date("2020-12-31"))),]
 
+df_sat$date<-strptime(df_sat$date,
+                  format = "%Y-%m-%d",
+                  tz = "Asia/Kuala_Lumpur")
+
+df_sat$date<- as.POSIXct.POSIXlt(df_sat$date)
+
+df_merge_day<- merge(df_day,df_sat, by= "date")
 # Merge satellite and eddy covariance data by month
 df_merge_month <- merge(df_month, df_sat_month, by = "date")
 
