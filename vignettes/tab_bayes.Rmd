@@ -1,0 +1,102 @@
+---
+title: "Summary of Bayesian Models as HTML Table"
+author: "Daniel Lüdecke"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+params:
+    EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
+---
+
+<!--
+vignette: >
+  %\VignetteIndexEntry{Summary of Bayesian Models as HTML Table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+-->
+
+```{r echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  comment = "#>", 
+  message = FALSE
+)
+
+m1 <- m2 <- NULL
+
+if (!requireNamespace("insight", quietly = TRUE) ||
+    !requireNamespace("httr", quietly = TRUE) ||
+    !requireNamespace("brms", quietly = TRUE)) {
+  knitr::opts_chunk$set(eval = FALSE)
+} else {
+  knitr::opts_chunk$set(eval = TRUE)
+  library(insight)
+  library(httr)
+  library(sjPlot)
+  library(brms)
+  m1 <- tryCatch(insight::download_model("brms_zi_2"), error = function(e) NULL)
+  m2 <- tryCatch(insight::download_model("brms_mv_3"), error = function(e) NULL)
+}
+
+if (is.null(m1) || is.null(m2)) {
+  knitr::opts_chunk$set(eval = FALSE)
+}
+```
+
+This vignette shows examples for using `tab_model()` to create HTML tables for mixed models. Basically, `tab_model()` behaves in a very similar way for mixed models as for other, simple regression models, as shown [in this vignette](tab_model_estimates.html).
+
+```{r, results='hide', message=FALSE, warning=FALSE, eval=FALSE}
+# load required packages
+library(sjPlot)
+library(brms)
+
+# sample models
+zinb <- read.csv("http://stats.idre.ucla.edu/stat/data/fish.csv")
+set.seed(123)
+m1 <- brm(bf(
+    count ~ persons + child + camper + (1 | persons),
+    zi ~ child + camper + (1 | persons)
+  ),
+  data = zinb,
+  family = zero_inflated_poisson()
+)
+
+data(epilepsy)
+set.seed(123)
+epilepsy$visit <- as.numeric(epilepsy$visit)
+epilepsy$Base2 <- sample(epilepsy$Base, nrow(epilepsy), replace = TRUE)
+f1 <- bf(Base ~ zAge + count + (1 |ID| patient))
+f2 <- bf(Base2 ~ zAge + Trt + (1 |ID| patient))
+m2 <- brm(f1 + f2 + set_rescor(FALSE), data = epilepsy)
+```
+
+## Bayesian models summaries as HTML table
+
+For Bayesian regression models, some of the differences to the table output from [simple models](tab_model_estimates.html) or [mixed models](tab_mixed.html) of `tab_models()` are the use of _Highest Density Intervals_ instead of confidence intervals, the Bayes-R-squared values, and a different "point estimate" (which is, by default, the median from the posterior draws).
+
+```{r}
+tab_model(m1)
+``` 
+
+## Multivariate response models
+
+For multivariate response models, like mediator-analysis-models, it is recommended to print just one model in the table, as each regression is displayed as own "model" in the output.
+
+```{r}
+tab_model(m2)
+``` 
+
+## Show two Credible Interval-column
+
+To show a second CI-column, use `show.ci50 = TRUE`.
+
+```{r}
+tab_model(m2, show.ci50 = TRUE)
+``` 
+
+## Mixing multivariate and univariate response models
+
+When both multivariate and univariate response models are displayed in one table, a column _Response_ is added for the multivariate response model, to indicate the different outcomes.
+
+```{r}
+tab_model(m1, m2)
+``` 

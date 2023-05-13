@@ -100,9 +100,24 @@ df_biomet<- df_biomet[,c(-6,-7)] #remove (DOY,unamed)
 colnames(df_ec)[1] <- "DATE"
 colnames(df_biomet)[7] <- "DATE"
 
-#### Merge df with df_bimet ####
-df <- merge(df_ec,df_biomet,by= c('DATE'))
+biomet_date <- strptime(df_biomet$DATE, format="%Y-%m-%d %H:%M", tz='Asia/Kuala_Lumpur')
+ec_date <- strptime(df_ec$DATE, format="%Y-%m-%d %H:%M", tz='Asia/Kuala_Lumpur')
 
+df_ec <- cbind(ec_date, df_ec)
+df_biomet <- cbind(biomet_date, df_biomet)
+
+df_ec <- df_ec[,-2]
+df_biomet <- df_biomet[,-8]
+
+
+#Rename the date
+colnames(df_ec)[1] <- "date"
+colnames(df_biomet)[1] <- "date"
+
+#### Merge df with df_bimet ####
+df <- merge(df_ec,df_biomet,by= 'date')
+
+rm(biomet_date,ec_date)
 
 # Using convert_magic to convert all columns to 'character' first
 df <- convert_magic(df[,c(seq(1,ncol(df)))],c(rep('character',times = ncol(df))))
@@ -120,11 +135,11 @@ df[,-1] <- charactersNumeric(df[,-1])
 sapply(df,class)
 
 # Change the date to POSIXCT format
-df$DATE <- strptime(df$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
-#class(df$DATE)
-df$DATE <- as.POSIXct.POSIXlt(df$DATE)
+df$date <- strptime(df$date, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
+#class(df$date)
+df$date <- as.POSIXct.POSIXlt(df$date)
 
-#Change name DATE to date
+#Change name date to date
 colnames(df)[1] <- "date"
 
 # extracting related variables from raw variables
@@ -213,45 +228,45 @@ PP_air_30 <- (PP_air_30/101.325) * 10^6
 df <- cbind(df, PP_air_30)
 rm(PP_air_30,co2_mF_30)
 
-##### Add TS EMA data ####
+# ##### Add TS EMA data ####
+# 
+# ts_ema <- read.csv('data/station/TS_ema.csv')
+# ts_ema$datetime <- as.character(ts_ema$datetime)
+# date <- strptime(ts_ema$datetime, 
+#                  format = "%Y-%m-%d %H:%M:%OS", 
+#                  tz = "Asia/Kuala_Lumpur")
+# ts_ema <- cbind(date, ts_ema)
+# colnames(ts_ema)[1] <- 'date'
+# ts_ema <- ts_ema[,-c(2,3)]
+# 
+# df <- merge(df, ts_ema, by = "date")
+# rm(ts_ema)
 
-ts_ema <- read.csv('data/station/TS_ema.csv')
-ts_ema$datetime <- as.character(ts_ema$datetime)
-date <- strptime(ts_ema$datetime, 
-                 format = "%Y-%m-%d %H:%M:%OS", 
-                 tz = "Asia/Kuala_Lumpur")
-ts_ema <- cbind(date, ts_ema)
-colnames(ts_ema)[1] <- 'date'
-ts_ema <- ts_ema[,-c(2,3)]
-
-df <- merge(df, ts_ema, by = "date")
-rm(ts_ema)
-
-##### 30-min CO2 seawater solubility ####
-
-# Solubility of CO2 in seawater
-# Reference: Liu, Q., Fukuda, K., Matsuda T. (2004). 
-# Study of solubility of carbon dioxide in seawater.Journal of JIME, 39(12), 91-96
-S = 0.10615 # [μmol+1 m-2 s-1]. 
-
-##### The 30-min scaled k value using McGillis (2001) ####
-# Schmidt number
-# Sc = 2116.8 + (-136.25*t) + 4.7353*(t^2) + (-0.092307)*(t^3) + 0.0007555*(t^4)
-# t = sea surface temperature
-
-temp <- df$EMA
-U <- df$WS
-Sc <- 2116.8 + (-136.25*temp) + 4.7353*(temp^2) + (-0.092307)*(temp^3) + 0.0007555*(temp^4)
-k_MG2001 <- ((660/Sc)^0.5)*(0.026*(U^3) + 3.3)  ## unit in cm/hr
-
-##### Calculating monthly scaled PCO2,sw ####
-conv_fact <- 100 * 3600 * 0.001 # Convert from umol m-2 s-1 h cm-1 L atm mol-1 to uatm
-PCO2_sw <- ((df$FCO2/(k_MG2001 * S)) * conv_fact) + df$PP_air_30
-
-
-df <- cbind(df,PCO2_sw)
-
-rm(S,Sc,temp,U,PCO2_sw,k_MG2001,conv_fact)
+# ##### 30-min CO2 seawater solubility ####
+# 
+# # Solubility of CO2 in seawater
+# # Reference: Liu, Q., Fukuda, K., Matsuda T. (2004). 
+# # Study of solubility of carbon dioxide in seawater.Journal of JIME, 39(12), 91-96
+# S = 0.10615 # [μmol+1 m-2 s-1]. 
+# 
+# ##### The 30-min scaled k value using McGillis (2001) ####
+# # Schmidt number
+# # Sc = 2116.8 + (-136.25*t) + 4.7353*(t^2) + (-0.092307)*(t^3) + 0.0007555*(t^4)
+# # t = sea surface temperature
+# 
+# temp <- df$EMA
+# U <- df$WS
+# Sc <- 2116.8 + (-136.25*temp) + 4.7353*(temp^2) + (-0.092307)*(temp^3) + 0.0007555*(temp^4)
+# k_MG2001 <- ((660/Sc)^0.5)*(0.026*(U^3) + 3.3)  ## unit in cm/hr
+# 
+# ##### Calculating monthly scaled PCO2,sw ####
+# conv_fact <- 100 * 3600 * 0.001 # Convert from umol m-2 s-1 h cm-1 L atm mol-1 to uatm
+# PCO2_sw <- ((df$FCO2/(k_MG2001 * S)) * conv_fact) + df$PP_air_30
+# 
+# 
+# df <- cbind(df,PCO2_sw)
+# 
+# rm(S,Sc,temp,U,PCO2_sw,k_MG2001,conv_fact)
 
 # #### Unused: Atmospheric stability classification #####
 # 
@@ -277,6 +292,14 @@ df_sat$date<-strptime(df_sat$date,
 df_sat$date<- as.POSIXct.POSIXlt(df_sat$date)
 
 df_merge_day<- merge(df_day,df_sat, by= "date")
+
+df_merge_day$CHL[which(df_merge_day$CHL> 7)] <- NA
+
+
+FCO2_mmol2 <- df_merge_day$FCO2 * 86.4
+df_merge_day <- cbind(df_merge_day, FCO2_mmol2)
+
+
 # Merge satellite and eddy covariance data by month
 df_merge_month <- merge(df_month, df_sat_month, by = "date")
 
@@ -294,7 +317,6 @@ df_merge_month$month <- months(df_merge_month$date)
 # Create Year Variable
 df_merge_month$year <- format(df_merge_month$date,"%Y")
 
-df_merge_day2<- 
 #### Calculating daily cumulative precipitation ####
 ## Cumulative Rainfall, 2015, 2016, 2017 and 2018 Jan-March no data for rainfall
 
@@ -310,21 +332,21 @@ rain_2020 <- aggregate((rain_c$P_RAIN)~month(rain_c$date),
 
 
 
-#### Normalizing PCO2,sw by seawater temperature ####
-temp_year <- c(rep(df_merge_year$EMA[1],12),
-               rep(df_merge_year$EMA[2],12),
-               rep(df_merge_year$EMA[3],12),
-               rep(df_merge_year$EMA[4],12),
-               rep(df_merge_year$EMA[5],11))
-temp_diff <- temp_year - df_merge_month$EMA
-
-PCO2_sw_T <- df_merge_month$PCO2_sw * (exp(0.0423 * temp_diff))
-
-df_merge_month <- cbind(df_merge_month,temp_diff,PCO2_sw_T)
-rm(temp_year,temp_diff,PCO2_sw_T)
-
-# Average to 1 year, again.
-df_merge_year_from_month <- timeAverage(df_merge_month, avg.time = '1 year')
+# #### Normalizing PCO2,sw by seawater temperature ####
+# temp_year <- c(rep(df_merge_year$EMA[1],12),
+#                rep(df_merge_year$EMA[2],12),
+#                rep(df_merge_year$EMA[3],12),
+#                rep(df_merge_year$EMA[4],12),
+#                rep(df_merge_year$EMA[5],11))
+# temp_diff <- temp_year - df_merge_month$EMA
+# 
+# PCO2_sw_T <- df_merge_month$PCO2_sw * (exp(0.0423 * temp_diff))
+# 
+# df_merge_month <- cbind(df_merge_month,temp_diff,PCO2_sw_T)
+# rm(temp_year,temp_diff,PCO2_sw_T)
+# 
+# # Average to 1 year, again.
+# df_merge_year_from_month <- timeAverage(df_merge_month, avg.time = '1 year')
 
 #### XXXXXX #####
 

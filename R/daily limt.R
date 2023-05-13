@@ -1,19 +1,26 @@
+######packages ####
+#install.packages('sjPlot')
+library(openair)
+library(ggplot2)
+library(dplyr)
+library(sjPlot)
+library(stats)
 
 ##### partition of date #####
-library(openair)
 
-marchf <- selectByDate(df_merge_day,month = 3)[c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Febf <- selectByDate(df_merge_day,month = 2)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Janf <- selectByDate(df_merge_day,month = 1)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Novf <- selectByDate(df_merge_day,month = 11)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Decf <- selectByDate(df_merge_day,month = 12)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Julyf <- selectByDate(df_merge_day,month = 7)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Aprf <- selectByDate(df_merge_day,month = 4)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Mayf <- selectByDate(df_merge_day,month = 5)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Junf <- selectByDate(df_merge_day,month = 6)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Augf <- selectByDate(df_merge_day,month = 8)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Sepf <- selectByDate(df_merge_day,month = 9)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
-Octf <- selectByDate(df_merge_day,month = 10)[,c(2,3,4,5,15,17,18,20,27,34,35,38)]
+
+marchf <- selectByDate(df_merge_day,month = 3)[c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Febf <- selectByDate(df_merge_day,month = 2)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Janf <- selectByDate(df_merge_day,month = 1)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Novf <- selectByDate(df_merge_day,month = 11)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Decf <- selectByDate(df_merge_day,month = 12)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Julyf <- selectByDate(df_merge_day,month = 7)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Aprf <- selectByDate(df_merge_day,month = 4)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Mayf <- selectByDate(df_merge_day,month = 5)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Junf <- selectByDate(df_merge_day,month = 6)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Augf <- selectByDate(df_merge_day,month = 8)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Sepf <- selectByDate(df_merge_day,month = 9)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
+Octf <- selectByDate(df_merge_day,month = 10)[,c(2,3,4,5,15,17,18,20,27,28,32,33,36)]
 
 
 df_NEM_day <- rbind(Decf,Janf, Febf,marchf)
@@ -469,28 +476,41 @@ ggplot(Decf, aes(DOY,CHL)) + geom_point(alpha = 0.3) +
 #### I want to average every hour of January####
 # We need the dplyr package
 
-library(dplyr)
+
 
 #### Group the data according to hour of day ####
 
 ##### January ####
 df_jan <- selectByDate(df,month = "Jan")
-df_hour_jan <- df_jan %>% 
+df_hour_jan <- df_jan %>%
   group_by(hour=format(as.POSIXlt(cut(date,breaks='hour')),'%H')) %>%
   summarise(FCO2=mean(FCO2,na.rm=TRUE), LE = mean(LE,na.rm=TRUE), H = mean(H,na.rm=TRUE),
             ZL = mean(ZL,na.rm=TRUE), WS = mean(WS,na.rm=TRUE), WDsin = mean(WDsin,na.rm=TRUE),
-            RH = mean(RH,na.rm=TRUE), P_RAIN = mean(P_RAIN,na.rm=TRUE),
+            RH = mean(RH,na.rm=TRUE),
             RG = mean(RG,na.rm=TRUE),
-            TA = mean(TA,na.rm=TRUE), PPFD = mean(PPFD,na.rm=TRUE), USTAR = mean(USTAR,na.rm=TRUE),
-            TS = mean(TS,na.rm=TRUE), co2_mole_fraction = mean(co2_mole_fraction,na.rm=TRUE),
-            air_pressure = mean(air_pressure,na.rm=TRUE), FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE),
-            EMA = mean(EMA,na.rm=TRUE), PCO2_sw = mean(PCO2_sw,na.rm=TRUE))
+            TA = mean(TA,na.rm=TRUE),
+            PPFD = mean(PPFD,na.rm=TRUE),
+            USTAR = mean(USTAR,na.rm=TRUE),
+            TS = mean(TS,na.rm=TRUE),
+            co2_mole_fraction = mean(co2_mole_fraction,na.rm=TRUE),
+            FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE))
+
+# df_hour_jan <- df_jan %>%
+# group_by(hour=format(as.POSIXlt(cut(date,breaks='hour')),'%H')) %>%
+# summarise(FCO2=mean(FCO2,na.rm=TRUE), LE = mean(LE,na.rm=TRUE), H = mean(H,na.rm=TRUE),
+# ZL = mean(ZL,na.rm=TRUE), WS = mean(WS,na.rm=TRUE), WD = mean(WD,na.rm=TRUE),
+# RH = mean(RH,na.rm=TRUE), P_RAIN = mean(P_RAIN,na.rm=TRUE),
+# RG = mean(RG,na.rm=TRUE),
+# TA = mean(TA,na.rm=TRUE), PPFD = mean(PPFD,na.rm=TRUE), USTAR = mean(USTAR,na.rm=TRUE),
+# TS = mean(TS,na.rm=TRUE), co2_mole_fraction = mean(co2_mole_fraction,na.rm=TRUE),
+# air_pressure = mean(air_pressure,na.rm=TRUE), FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE),
+# EMA = mean(EMA,na.rm=TRUE), PCO2_sw = mean(PCO2_sw,na.rm=TRUE))
 
 
 df_hour_jan$hour <- as.numeric(df_hour_jan$hour)
 
 
-library(ggplot2)
+
 jpeg(filename='figs/Jan_FCO2mmol.jpg', unit = 'cm', width = 15, height = 10, res = 360)
 par(mar=c(4,4,1,1),xpd=FALSE)
 ggplot(df_hour_jan, aes(hour,FCO2_mmol)) + geom_point(alpha = 0.2) + 
@@ -521,17 +541,16 @@ ggplot(df_hour_jan, aes(hour,PPFD)) + geom_point(alpha = 0.2) +
   theme_bw()
 dev.off()
 ##### June ####
-df_jun <- selectByDate(df,month = "Jun")
+df_jun <- selectByDate(df, month = "Jun")
 df_hour_jun <- df_jun %>% 
-  group_by(hour=format(as.POSIXlt(cut(date,breaks='hour')),'%H')) %>%
+  group_by(hour=format(as.POSIXct(cut(date,breaks='hour')),'%H')) %>%
   summarise(FCO2=mean(FCO2,na.rm=TRUE), LE = mean(LE,na.rm=TRUE), H = mean(H,na.rm=TRUE),
             ZL = mean(ZL,na.rm=TRUE), WS = mean(WS,na.rm=TRUE), WDsin = mean(WDsin,na.rm=TRUE),
             RH = mean(RH,na.rm=TRUE), P_RAIN = mean(P_RAIN,na.rm=TRUE),
             RG = mean(RG,na.rm=TRUE),
             TA = mean(TA,na.rm=TRUE), PPFD = mean(PPFD,na.rm=TRUE), USTAR = mean(USTAR,na.rm=TRUE),
             TS = mean(TS,na.rm=TRUE), co2_mole_fraction = mean(co2_mole_fraction,na.rm=TRUE),
-            air_pressure = mean(air_pressure,na.rm=TRUE), FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE),
-            EMA = mean(EMA,na.rm=TRUE), PCO2_sw = mean(PCO2_sw,na.rm=TRUE))
+            FCO2_mmol = mean(FCO2_mmol,na.rm=TRUE))
 
 
 df_hour_jun$hour <- as.numeric(df_hour_jun$hour)
@@ -620,58 +639,68 @@ dev.off()
 
 
 #### mean and sd #####
-mean_df_day  <- sapply(na.omit(df_merge_day[c(2,3,4,5,15,17,18,20,27,34,35,38)]), mean)
-sd_df_day <- sapply(na.omit(df_merge_day[c(2,3,4,5,15,17,18,20,27,34,35,38)]), sd)
+mean_df_day  <- sapply(df_merge_day[c(2,3,4,5,15,17,18,20,27,28,32,33,36)], mean, na.rm=T)
+sd_df_day <- sapply(df_merge_day[c(2,3,4,5,15,17,18,20,27,28,32,33,36)], sd, na.rm=T)
 df_statistic_day <- data.frame(rbind(mean_df_day,sd_df_day))
 row.names(df_statistic_day) <- c("Mean","SD")
 
-mean_df_jan  <- sapply(na.omit(Janf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), mean)
-sd_df_jan <- sapply(na.omit(Janf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), sd)
-df_statistic_jan <- data.frame(rbind(mean_df_jan,sd_df_jan))
-row.names(df_statistic_jan) <- c("Mean","SD")
+# mean_df_jan  <- sapply(na.omit(Janf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), mean)
+# sd_df_jan <- sapply(na.omit(Janf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), sd)
+# df_statistic_jan <- data.frame(rbind(mean_df_jan,sd_df_jan))
+# row.names(df_statistic_jan) <- c("Mean","SD")
+# 
+# mean_df_jun  <- sapply(na.omit(Junf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), mean)
+# sd_df_jun <- sapply(na.omit(Junf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), sd)
+# df_statistic_jun <- data.frame(rbind(mean_df_jun,sd_df_jun))
+# row.names(df_statistic_jun) <- c("Mean","SD")
 
-mean_df_jun  <- sapply(na.omit(Junf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), mean)
-sd_df_jun <- sapply(na.omit(Junf[c(1,2,3,4,5,6,7,8,9,10,11,12)]), sd)
-df_statistic_jun <- data.frame(rbind(mean_df_jun,sd_df_jun))
-row.names(df_statistic_jun) <- c("Mean","SD")
-
-mean_df_NEM_day  <- sapply(na.omit(df_NEM_day), mean)
-sd_df_NEM_day <- sapply(na.omit(df_NEM_day), sd)
+mean_df_NEM_day  <- sapply(df_NEM_day, mean,na.rm=T)
+sd_df_NEM_day <- sapply(df_NEM_day, sd,na.rm=T)
 df_statistic_NEM<- data.frame(rbind(mean_df_NEM_day,sd_df_NEM_day))
 row.names(df_statistic_NEM) <- c("Mean","SD")
 
-mean_df_SWM_day  <- sapply(na.omit(df_SWM_day), mean)
-sd_df_SWM_day <- sapply(na.omit(df_SWM_day), sd)
-df_statistic_SWM <- data.frame(rbind(mean_df_SWM_day,sd_df_SWM_day))
+
+mean_df_SWM_day  <- sapply(df_SWM_day, mean,na.rm=T)
+sd_df_SWM_day <- sapply(df_SWM_day, sd,na.rm=T)
+df_statistic_SWM<- data.frame(rbind(mean_df_SWM_day,sd_df_SWM_day))
 row.names(df_statistic_SWM) <- c("Mean","SD")
+
+
 
 
 
 ######correlation daily time #####
 corPlot(df_merge_day)
 corPlot(df_NEM_day)
-corPlot(df_SWM)
-cor((df_merge_day)[c(27,3,34,20,15,35,4)], method = "pearson", use ="complete.obs")
+corPlot(df_SWM_day)
+cor((df_merge_day)[c(27,3,32,20,15,33,4,36)], method = "pearson", use ="complete.obs")
 cor((df_NEM_day)[c(9,2,10,8,5,11,3,12)], method = "pearson", use ="complete.obs")
 cor((df_SWM_day)[c(9,2,10,8,5,11,3,12)], method = "pearson", use ="complete.obs")
 
-######trying to tab.corr plot ####
-install.packages("datarium")
-library(datarium)
-install.packages("sjPlot")
-install.packages("devtools")
-library(devtools)
-devtools::install_github("strengejacke/sjPlot")
+
+
 library(sjPlot)
-library(devtools)
-devtools::install_github("strengejacke/sjPlot")
+
+tab_corr(df_merge_day)
+
+tab_corr((df_merge_day)[c(27,3,32,20,15,33,4,36)],na.deletion = c("listwise"),
+         show.p = TRUE,corr.method = c("spearman"),p.numeric = F)
+
+tab_corr((df_NEM_day)[c(9,2,11,8,5,12,3)],na.deletion = c("listwise"),
+         show.p = TRUE,corr.method = c("spearman"),p.numeric = F)
 
 
+tab_corr((df_SWM_day)[c(9,2,11,8,5,12,3)],na.deletion = c("listwise"),
+         show.p = TRUE,corr.method = c("spearman"),p.numeric = F)
+
+
+# tab_corr((df_merge_day)[c(27,3,32,20,15,33,4,36)],na.deletion = c("listwise"),
+#          show.p = TRUE,corr.method = c("pearson"),p.numeric = F)
 
 ##### p-value ####
 
-library(stats)
-t.test(df_statistic_NEM$CHL,df_statistic_SWM$CHL)
-t.test(df_statistic_NEM$WS,df_statistic_SWM$WS)
-t.test(df_statistic_NEM$SST,df_statistic_SWM$SST)
-t.test(df_statistic_day$SST,df_statistic_day$TS)
+t.test(df_NEM_day$CHL,df_SWM_day$CHL)
+t.test(df_NEM_day$WS,df_SWM_day$WS)
+t.test(df_NEM_day$TS,df_SWM_day$TS)
+t.test(df_NEM_day$SST,df_SWM_day$SST)
+t.test(df_merge_day$SST,df_merge_day$TS)
