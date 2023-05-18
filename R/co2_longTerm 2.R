@@ -32,6 +32,7 @@ source('R/tools/tool_charactersNumeric.R')
 source('R/tools/tool_trapezium_intg_2.R')
 source('R/tools/tool_trapezium_intg_3.R')
 source('R/tools/f2pCO2.R')
+source('R/tools/tool_salinity_weiss.R')
 
 #### SATELLITE DATA ANALYSIS ####
 #### Import sat data ###############
@@ -69,6 +70,12 @@ df_sat$DATE <- as.POSIXct.POSIXlt(df_sat$DATE)    #Change to POSIXct format
 df_sat<- df_sat[which(df_sat$DATE >= as.POSIXct(as.Date("2016-01-01")) 
                        & df_sat$DATE <= as.POSIXct(as.Date("2020-12-31"))),]
 
+date <- df_sat$DATE
+date <- strptime(date,format="%Y-%m-%d %H:%M:%S", tz='Asia/Kuala_Lumpur')
+df_sat <- cbind(date,df_sat)
+df_sat <- df_sat[,c(-2)]
+rm(date)
+
 # Changing all the '-32767.0' or '-32767' (missing data) to NA
 for (i in 4:8){                                   #This means column number 4 to coloumn number 8
   df_sat[i][df_sat[i] == '-32767' | df_sat[i] == '-32767.0'] <- NA
@@ -85,6 +92,7 @@ df_sat_month <- timeAverage(df_sat, avg.time = "1 month")
 
 #Average data to yearly intervals
 df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
+
 
 
 
@@ -165,7 +173,7 @@ FCO2_mmol <- df$FCO2 * 86.4
 df <- cbind(df, FCO2_mmol)
 rm(FCO2_mmol)
 
-
+#### Data Filtering ####
 df$LE[which(df$LE_QC == 2)] <- NA 
 
 df$H[which(df$H_QC == 2)] <- NA 
@@ -187,14 +195,12 @@ df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
 df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
 
 
-# Remove all improbable values of T
+##### Remove all improbable values of T #####
 df$TA[which(df$TA < 0 | df$TA > 100 )] <- NA
 df$TS[which(df$TS < 0 )] <- NA
 
-# random filter
 df$TA[df$TA < 20 | df$TA > 40] <- NA
 df$TS[df$TS < 20 | df$TS > 40] <- NA
-#df$SST[df$SST < 10 | df$SST > 50] <- NA
 
 df$RH[df$RH < 25 | df$RH > 100] <- NA
 
@@ -206,6 +212,7 @@ df$WS[df$WS > 100] <- NA
 
 df$ZL[abs(df$ZL)>10] <- NA
 
+##### Filter data for rain #####
 df$P_RAIN[df$P_RAIN > 0.1 | df$P_RAIN < 0] <- NA
 
 df$USTAR[which(df$USTAR > 10)] <- NA
@@ -217,47 +224,63 @@ CD <- (df$USTAR/df$WS)^2
 df <- cbind(df,CD)
 rm(CD)
 
-##### Add TS EMA data ####
+##### Add Outlier-Removed Data #####
 
-ts_ema <- read.csv('data/station/TS_ema.csv')
-ts_ema$datetime <- as.character(ts_ema$datetime)
-date <- strptime(ts_ema$datetime, 
-                 format = "%Y-%m-%d %H:%M:%OS", 
+temp <- read.csv('data/station/merged_data.csv')
+temp$datetime <- as.character(temp$datetime)
+date <- strptime(temp$datetime,
+                 format = "%d/%m/%Y %H:%M",
                  tz = "Asia/Kuala_Lumpur")
-ts_ema <- cbind(date, ts_ema)
-colnames(ts_ema)[1] <- 'date'
-ts_ema <- ts_ema[,-c(2,3)]
+temp <- cbind(date, temp)
+colnames(temp)[3] <- 'EMA'
+colnames(temp)[4] <- 'TA_ema'
+colnames(temp)[5] <- 'RH_ema'
+temp <- temp[,-c(2)]
 
-df <- merge(df, ts_ema, by = "date")
-rm(ts_ema)
+df <- merge(df, temp, by = "date")
+rm(temp,date)
 
-##### Add TA EMA data ####
-
-TA_ema <- read.csv('data/station/TA_ema.csv')
-TA_ema$date <- as.character(TA_ema$date)
-date <- strptime(TA_ema$date, 
-                 format = "%d/%m/%Y %H:%M", 
-                 tz = "Asia/Kuala_Lumpur")
-TA_ema <- cbind(date, TA_ema)
-colnames(TA_ema)[4] <- 'TA_ema'
-TA_ema <- TA_ema[,-c(2,3)]
-
-df <- merge(df, TA_ema, by = "date")
-rm(TA_ema)
-
-##### Add RH EMA data ####
-
-RH_ema <- read.csv('data/station/RH_ema.csv')
-RH_ema$date <- as.character(RH_ema$date)
-date <- strptime(RH_ema$date, 
-                 format = "%d/%m/%Y %H:%M", 
-                 tz = "Asia/Kuala_Lumpur")
-RH_ema <- cbind(date, RH_ema)
-colnames(RH_ema)[4] <- 'RH_ema'
-RH_ema <- RH_ema[,-c(2,3)]
-
-df <- merge(df, RH_ema, by = "date")
-rm(RH_ema)
+# ##### Add TS EMA data ####
+# 
+# ts_ema <- read.csv('data/station/TS_ema.csv')
+# ts_ema$datetime <- as.character(ts_ema$datetime)
+# date <- strptime(ts_ema$datetime, 
+#                  format = "%Y-%m-%d %H:%M:%OS", 
+#                  tz = "Asia/Kuala_Lumpur")
+# ts_ema <- cbind(date, ts_ema)
+# colnames(ts_ema)[1] <- 'date'
+# ts_ema <- ts_ema[,-c(2,3)]
+# 
+# df <- merge(df, ts_ema, by = "date")
+# rm(ts_ema)
+# 
+# ##### Add TA EMA data ####
+# 
+# TA_ema <- read.csv('data/station/TA_ema.csv')
+# TA_ema$date <- as.character(TA_ema$date)
+# date <- strptime(TA_ema$date, 
+#                  format = "%d/%m/%Y %H:%M", 
+#                  tz = "Asia/Kuala_Lumpur")
+# TA_ema <- cbind(date, TA_ema)
+# colnames(TA_ema)[4] <- 'TA_ema'
+# TA_ema <- TA_ema[,-c(2,3)]
+# 
+# df <- merge(df, TA_ema, by = "date")
+# rm(TA_ema)
+# 
+# ##### Add RH EMA data ####
+# 
+# RH_ema <- read.csv('data/station/RH_ema.csv')
+# RH_ema$date <- as.character(RH_ema$date)
+# date <- strptime(RH_ema$date, 
+#                  format = "%d/%m/%Y %H:%M", 
+#                  tz = "Asia/Kuala_Lumpur")
+# RH_ema <- cbind(date, RH_ema)
+# colnames(RH_ema)[4] <- 'RH_ema'
+# RH_ema <- RH_ema[,-c(2,3)]
+# 
+# df <- merge(df, RH_ema, by = "date")
+# rm(RH_ema)
 
 #### Add deltaT (original data) ####
 
@@ -310,10 +333,10 @@ df_sat_temp <- timeAverage(df_sat_temp,avg.time = "1 hour")
 # Merge the salinity and sat data
 df_salinity_sat <- merge(df_salinity_temp,df_sat_temp,by=c('date'))
 
-df_salinity_sat <- timeAverage(df_temp, avg.time='month')
+df_salinity_sat <- timeAverage(df_salinity_sat, avg.time='month')
 
 ##### Calculate solubility using the Weiss (1974) equation ####
-solub <- solubility(df_temp$SST,df_temp$salinity)
+solub <- solubility(df_salinity_sat$SST,df_salinity_sat$salinity)
 # Merging calculated solubility data into salinity and sat data
 df_salinity_sat <- cbind(df_salinity_sat,solub)
 
@@ -367,6 +390,8 @@ df_day <- timeAverage(df, avg.time = "1 day")
 
 # Merge satellite and eddy covariance data by month
 df_merge_month <- merge(df_month, df_sat_month, by = "date")
+
+
 
 # Merge satellite and eddy covariance data by year
 df_merge_year <- merge(df_year, df_sat_year, by = "date")
