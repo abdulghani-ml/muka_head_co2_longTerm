@@ -1,27 +1,6 @@
 library(tidyverse)
 library(ggplot2)
 
-ggplot(df,aes(DOY, TA)) + geom_point()
-
-ggplot(df,aes(date, RH)) + geom_point()
-
-ggplot(df, aes(DOY, EMA)) + geom_point()
-
-ggplot(df_sat, aes(date, SST)) + geom_point()
-
-write.table(data.frame(date=df$date,TA=df$TA,RH=df$RH),"data/station/TA_RH_EMA.csv",sep = ',')
-
-summary(df$delT_ema)
-summary(NEM_30$delT_ema)
-summary(SWM_30$delT_ema)
-summary(STM_30$EMA)
-summary(FTM_30$EMA)
-
-summary(NEM_30$CD)
-summary(SWM_30$CD)
-summary(STM_30$CD)
-summary(FTM_30$CD)
-
 t.test(NEM_30$FCO2, SWM_30$FCO2)
 
 
@@ -119,200 +98,29 @@ FCO2_mmol <- df$FCO2 * 86.4
 (60 * 60 * 24 * 365) / 10^6
 
 
-#### Plot: Daily z/L versus DOY ####
-jpeg(file='figs/daily_ZL_DOY.jpeg',width=10,height=8,res=350, units = 'cm')
-DOY_ZL <- ggplot(df_daily, aes(x=DOY,y=ZL)) + 
-  geom_line(alpha=0.2, color = "black") + 
-  geom_smooth(aes(color ='#F8766D')) 
-# Axes - labels
-DOY_ZL <- DOY_ZL + coord_cartesian(ylim=c(-10,10))
-DOY_ZL <- DOY_ZL + ylab(expression("z/L"~"[dimensionless]"))
-DOY_ZL <- DOY_ZL + xlab(expression("DOY"))
-DOY_ZL <- DOY_ZL + scale_color_identity(guide = "legend")
-DOY_ZL
+plot(df_hour$hour,df_hour$TS, ylim=c(10,40), pch=19, col='blue')
+points(df_hour$hour,df_hour$TA, pch=19,col='red')
+lines(df_hour$hour,df_hour$H * 15,col='red')
 
-# Shaded area for SWM
-DOY_ZL <- DOY_ZL + annotate("rect", xmin = 152, xmax = 273, ymin = -11, ymax = 11,
-                            alpha = .1,fill = "#F8766D")
+plot(df_hour$hour,df_hour$LE,pch=19,col='blue')
 
-# Shaded area for NEM 1
-DOY_ZL <- DOY_ZL + annotate("rect", xmin = 1, xmax = 90, ymin = -11, ymax = 11,
-                            alpha = .1,fill = "#00BA38")
-# Shaded area for NEM 2
-DOY_ZL <- DOY_ZL + annotate("rect", xmin = 335, xmax = 365, ymin = -11, ymax = 11,
-                            alpha = .1,fill = "#00BA38")
-
-# Theme
-DOY_ZL <-  DOY_ZL + theme_bw()
-DOY_ZL
-dev.off()
-rm(DOY_ZL)
-
-#### Plot: Daily Hourly FCO2 V2 ####
-jpeg(file='figs/fco2_daily.jpeg',width=16,height=12,res=350, units = 'cm')
-# Data 
-
-temp_df_hour_pos <- data.frame(hour = df_hour_pos$hour,FCO2 = df_hour_pos$FCO2)
-temp_df_hour_neg <- data.frame(hour = df_hour_neg$hour, FCO2 = df_hour_neg$FCO2)
-temp_df_hour_pos_neg <- data.frame(hour = df_hour_pos_neg$hour, FCO2 = df_hour_pos_neg$FCO2)
-
-temp_combined <- setNames(list(temp_df_hour_pos, temp_df_hour_neg, temp_df_hour_pos_neg), 
-                          c("df_hour_pos","df_hour_neg","df_hour_pos_neg")) %>% 
-  map_df(~ .x %>% gather(key, value, -hour), .id="source")
+plot(df_hour$hour,df_hour$WS, ylim=c(0,1), pch=19, col='blue')
+plot(df_hour$hour,df_hour$WD,pch=19,col='blue')
 
 
-fco2_hour <- ggplot(temp_combined, aes(hour, value, group=source)) + 
-  geom_point(aes(col=source)) + geom_smooth(aes(col=source),se = T, alpha = 0.2) +
-  scale_color_manual(values=c("#F8766D","#00BA38","#808080"))
+points(df_hour$hour,df_hour$TA, pch=19,col='red')
+lines(df_hour$hour,df_hour$H * 15,col='red')
 
 
-# Axes - limits
-fco2_hour <- fco2_hour + coord_cartesian(ylim=c(-0.5,1.5)) 
-# + 
-#   scale_x_continuous(breaks=seq(0,23,1)) 
-
-fco2_hour <- fco2_hour + ylab(expression("F"~CO[2]~"["*mu*mol~m^{-2}~s^{-1}*"]"))
-fco2_hour <- fco2_hour + xlab("Hour")
-
-# Theme
-fco2_hour <- fco2_hour + theme_bw()
-
-# Legend
-fco2_hour <- fco2_hour + theme(legend.position = c(0.85,0.88)) + 
-  scale_color_manual(name = NULL,
-                     values = c('df_hour_pos' = '#F8766D',
-                                'df_hour_neg' = "#00BA38",
-                                'df_hour_pos_neg' = "#808080"),
-                     labels = c(expression("–"*"F"~CO[2]), 
-                                expression("+"*"F"~CO[2]),
-                                expression("F"~CO[2])))
-
-# Plot
-fco2_hour
-
-dev.off()
-rm(fco2_hour, temp_combined, temp_df_hour_neg, temp_df_hour_pos, temp_df_hour_pos_neg)
-
-#### Plot: Daily FCO2 with U  V1 ####
-jpeg(file='figs/fco2_U_daily.jpeg',width=16,height=12,res=350, units = 'cm')
-# Data 
-fco2_hour <- ggplot(df_hour_pos, aes(as.integer(hour), FCO2)) + 
-  geom_point(col="#F8766D") +
-  geom_smooth(col = "#F8766D", se = F) 
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_neg,aes(as.integer(hour),FCO2), col="#00BA38") +
-  geom_smooth(data=df_hour_neg,aes(as.integer(hour),FCO2), col = "#00BA38", se=F)
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_pos_neg, aes(as.integer(hour), FCO2), color="#808080", alpha=0.5) + 
-  geom_smooth(data=df_hour_pos_neg, aes(as.integer(hour), FCO2), color="#808080", se=F)
-
-fco2_hour <- fco2_hour + 
-  geom_point(data=df_hour_pos,aes(as.integer(hour), WS), color='#F8766D',alpha=0.5) + 
-  geom_line(stat='smooth',method='loess', linetype = "dashed",
-            data=df_hour_pos,aes(as.integer(hour), WS), color = "#F8766D", se = FALSE,alpha=0.5)
-
-fco2_hour <- fco2_hour + 
-  geom_point(data=df_hour_neg,aes(as.integer(hour), WS), color='#00BA38',alpha=0.5) + 
-  geom_line(stat='smooth',method='loess',linetype = "dashed",
-            data=df_hour_neg,aes(as.integer(hour), WS), color = "#00BA38", se = FALSE,alpha=0.5)
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_pos_neg, aes(as.integer(hour), WS), color="#808080", alpha=0.5) +
-  geom_smooth(data=df_hour_pos_neg, aes(as.integer(hour), WS), color="#808080", se=F, alpha=0.5,
-              linetype = "dashed")
-
-# Axes - limits
-fco2_hour <- fco2_hour + coord_cartesian(ylim=c(-0.5,2)) + 
-  scale_x_continuous(breaks=seq(0,23,1)) 
-# Axes - labels
-fco2_hour <- fco2_hour + 
-  scale_y_continuous(breaks = seq(-0.5,2,0.5), labels=seq(-0.5,2,0.5),
-                     sec.axis = sec_axis(~.* 1,
-                                         name=expression("U"~"["*m~s^{-1}*"]"),
-                                         labels=seq(-0.5,2,0.5)))
+df_NEM_daily <- timeAverage(NEM_30,avg.time='day')
+df_SWM_daily <- timeAverage(SWM_30,avg.time='day')
 
 
-fco2_hour <- fco2_hour + ylab(expression("F"~CO[2]~"["*mu*mol~m^{-2}~s^{-1}*"]"))
-fco2_hour <- fco2_hour + xlab("Hour")
+temp_df <- data.frame(FCO2 = df$FCO2, TA = df$TA_ema, TS = df$EMA, delT = df$delT, U = df$WS,
+                      PPFD = df$PPFD, RG = df$RG, RN= df$RN)
 
+corPlot(temp_df, method='spearman')
 
-# Theme
-fco2_hour <- fco2_hour + theme_bw()
-fco2_hour
+cor.test(temp_df$FCO2,temp_df$TS,method='spearman')
 
-# Legend
-# fco2_hour <- fco2_hour + scale_color_discrete(name = NULL,
-#                                         breaks = c('Negative','Positive'),
-#                                         labels = c(expression("–"*"F"~CO[2]), 
-#                                                    expression("F"~CO[2]))) +
-#   theme(legend.position = c(0.88,0.88))
-
-# Plot
-fco2_hour
-
-dev.off()
-rm(fco2_hour)
-
-#### Plot: Daily FCO2 with z/L V1 ####
-jpeg(file='figs/fco2_zL_daily.jpeg',width=16,height=12,res=350, units = 'cm')
-# Data 
-fco2_hour <- ggplot(df_hour_pos, aes(as.integer(hour), FCO2)) + 
-  geom_point(col="#F8766D") +
-  geom_smooth(col = "#F8766D", se = F) 
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_neg,aes(as.integer(hour),FCO2), col="#00BA38") +
-  geom_smooth(data=df_hour_neg,aes(as.integer(hour),FCO2), col = "#00BA38", se=F)
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_pos_neg, aes(as.integer(hour), FCO2), color="#808080", alpha=0.5) + 
-  geom_smooth(data=df_hour_pos_neg, aes(as.integer(hour), FCO2), color="#808080", se=F)
-
-fco2_hour <- fco2_hour + 
-  geom_point(data=df_hour_pos,aes(as.integer(hour), ZL*0.5),color='#F8766D',alpha=0.5) + 
-  geom_line(stat='smooth',method='loess',linetype = "dashed",
-            data=df_hour_pos,aes(as.integer(hour), ZL*0.5),col = "#F8766D", se = FALSE,alpha=0.5)
-
-fco2_hour <- fco2_hour + 
-  geom_point(data=df_hour_neg,aes(as.integer(hour), ZL*0.5),color='#00BA38',alpha=0.5) + 
-  geom_line(stat='smooth',method='loess',linetype = "dashed",
-            data=df_hour_neg,aes(as.integer(hour), ZL*0.5),col = "#00BA38", se = FALSE,alpha=0.5)
-
-fco2_hour <- fco2_hour +
-  geom_point(data=df_hour_pos_neg, aes(as.integer(hour), ZL*0.5),color="#808080",alpha=0.5) +
-  geom_smooth(data=df_hour_pos_neg, aes(as.integer(hour), ZL*0.5),color="#808080",se=F,
-              linetype = "dashed",)
-
-# Axes - limits
-fco2_hour <- fco2_hour + coord_cartesian(ylim=c(-2,2)) + 
-  scale_x_continuous(breaks=seq(0,23,1)) 
-# Axes - labels
-fco2_hour <- fco2_hour + 
-  scale_y_continuous(breaks = seq(-2,2,0.5), labels=seq(-2,2,0.5),
-                     sec.axis = sec_axis(~.* 0.5, 
-                                         name="z/L [dimensionless]",
-                                         labels=seq(-4,4,2)))
-
-
-fco2_hour <- fco2_hour + ylab(expression("F"~CO[2]~"["*mu*mol~m^{-2}~s^{-1}*"]"))
-fco2_hour <- fco2_hour + xlab("Hour")
-
-
-# Theme
-fco2_hour <- fco2_hour + theme_bw()
-fco2_hour
-
-# Legend
-# fco2_hour <- fco2_hour + scale_color_discrete(name = NULL,
-#                                         breaks = c('Negative','Positive'),
-#                                         labels = c(expression("–"*"F"~CO[2]), 
-#                                                    expression("F"~CO[2]))) +
-#   theme(legend.position = c(0.88,0.88))
-
-# Plot
-fco2_hour
-
-dev.off()
-rm(fco2_hour)
+cor.test(temp_df$FCO2,temp_df$TA,method='spearman')

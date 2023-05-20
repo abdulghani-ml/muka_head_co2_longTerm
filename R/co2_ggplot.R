@@ -1,16 +1,18 @@
+#### PACKAGES ####
 library(ggplot2)
 library(dplyr)
 
-df_daily <- timeAverage(df,avg.time='day')
-# The color red and green in ggplot
+#### COLOR ####
 col_sample <- c('#F8766D','#00BA38')
+
+#### AVERAGING ####
+df_daily <- timeAverage(df,avg.time='day')
 
 df_2016 <- selectByDate(df_daily,year=2016)
 df_2017 <- selectByDate(df_daily,year=2017)
 df_2018 <- selectByDate(df_daily,year=2018)
 df_2019 <- selectByDate(df_daily,year=2019)
 df_2020 <- selectByDate(df_daily,year=2020)
-
 
 df_weekly <- timeAverage(df,avg.time='week')
 
@@ -33,6 +35,8 @@ rm(i)
 df <- cbind(df,pos_or_neg)
 rm(pos_or_neg)
 
+
+#### CATEGORIZE ACCORDING TO WIND CLASSES ####
 cat_WS <- cut(df$WS,
               breaks=c(0,0.25,0.5,0.75,1.0,1.25,1.5,1.75,2,2.25,2.5,2.75,3,4))
 
@@ -42,10 +46,7 @@ cat_WS1 <- cut(df$WS,
 df <- cbind(df,cat_WS,cat_WS1)
 rm(cat_WS,cat_WS1)
 
-
-
-
-#### Group the data according to hour of day ####
+#### GROUP ACCORDING TO HOUR ####
 
 # Overall #
 df_hour <- df %>% 
@@ -359,7 +360,6 @@ sd(FTM_solub$solub,na.rm = T)
 # dev.off()
 # rm(fco2_hour)
 # 
-# ####
 
 #### Plot: Daily Hourly FCO2 V2 ####
 jpeg(file='figs/fco2_daily.jpeg',width=16,height=12,res=350, units = 'cm')
