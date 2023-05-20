@@ -224,63 +224,63 @@ CD <- (df$USTAR/df$WS)^2
 df <- cbind(df,CD)
 rm(CD)
 
-##### Add Outlier-Removed Data #####
+# ##### Add Outlier-Removed Data #####
+# 
+# temp <- read.csv('data/station/merged_data.csv')
+# temp$datetime <- as.character(temp$datetime)
+# date <- strptime(temp$datetime,
+#                  format = "%d/%m/%Y %H:%M",
+#                  tz = "Asia/Kuala_Lumpur")
+# temp <- cbind(date, temp)
+# colnames(temp)[3] <- 'EMA'
+# colnames(temp)[4] <- 'TA_ema'
+# colnames(temp)[5] <- 'RH_ema'
+# temp <- temp[,-c(2)]
+# 
+# df <- merge(df, temp, by = "date")
+# rm(temp,date)
 
-temp <- read.csv('data/station/merged_data.csv')
-temp$datetime <- as.character(temp$datetime)
-date <- strptime(temp$datetime,
+##### Add TS EMA data ####
+
+ts_ema <- read.csv('data/station/TS_ema.csv')
+ts_ema$datetime <- as.character(ts_ema$datetime)
+date <- strptime(ts_ema$datetime,
+                 format = "%Y-%m-%d %H:%M:%OS",
+                 tz = "Asia/Kuala_Lumpur")
+ts_ema <- cbind(date, ts_ema)
+colnames(ts_ema)[1] <- 'date'
+ts_ema <- ts_ema[,-c(2,3)]
+
+df <- merge(df, ts_ema, by = "date")
+rm(ts_ema)
+
+##### Add TA EMA data ####
+
+TA_ema <- read.csv('data/station/TA_ema.csv')
+TA_ema$date <- as.character(TA_ema$date)
+date <- strptime(TA_ema$date,
                  format = "%d/%m/%Y %H:%M",
                  tz = "Asia/Kuala_Lumpur")
-temp <- cbind(date, temp)
-colnames(temp)[3] <- 'EMA'
-colnames(temp)[4] <- 'TA_ema'
-colnames(temp)[5] <- 'RH_ema'
-temp <- temp[,-c(2)]
+TA_ema <- cbind(date, TA_ema)
+colnames(TA_ema)[4] <- 'TA_ema'
+TA_ema <- TA_ema[,-c(2,3)]
 
-df <- merge(df, temp, by = "date")
-rm(temp,date)
+df <- merge(df, TA_ema, by = "date")
+rm(TA_ema)
 
-# ##### Add TS EMA data ####
-# 
-# ts_ema <- read.csv('data/station/TS_ema.csv')
-# ts_ema$datetime <- as.character(ts_ema$datetime)
-# date <- strptime(ts_ema$datetime, 
-#                  format = "%Y-%m-%d %H:%M:%OS", 
-#                  tz = "Asia/Kuala_Lumpur")
-# ts_ema <- cbind(date, ts_ema)
-# colnames(ts_ema)[1] <- 'date'
-# ts_ema <- ts_ema[,-c(2,3)]
-# 
-# df <- merge(df, ts_ema, by = "date")
-# rm(ts_ema)
-# 
-# ##### Add TA EMA data ####
-# 
-# TA_ema <- read.csv('data/station/TA_ema.csv')
-# TA_ema$date <- as.character(TA_ema$date)
-# date <- strptime(TA_ema$date, 
-#                  format = "%d/%m/%Y %H:%M", 
-#                  tz = "Asia/Kuala_Lumpur")
-# TA_ema <- cbind(date, TA_ema)
-# colnames(TA_ema)[4] <- 'TA_ema'
-# TA_ema <- TA_ema[,-c(2,3)]
-# 
-# df <- merge(df, TA_ema, by = "date")
-# rm(TA_ema)
-# 
-# ##### Add RH EMA data ####
-# 
-# RH_ema <- read.csv('data/station/RH_ema.csv')
-# RH_ema$date <- as.character(RH_ema$date)
-# date <- strptime(RH_ema$date, 
-#                  format = "%d/%m/%Y %H:%M", 
-#                  tz = "Asia/Kuala_Lumpur")
-# RH_ema <- cbind(date, RH_ema)
-# colnames(RH_ema)[4] <- 'RH_ema'
-# RH_ema <- RH_ema[,-c(2,3)]
-# 
-# df <- merge(df, RH_ema, by = "date")
-# rm(RH_ema)
+##### Add RH EMA data ####
+
+RH_ema <- read.csv('data/station/RH_ema.csv')
+RH_ema$date <- as.character(RH_ema$date)
+date <- strptime(RH_ema$date,
+                 format = "%d/%m/%Y %H:%M",
+                 tz = "Asia/Kuala_Lumpur")
+RH_ema <- cbind(date, RH_ema)
+colnames(RH_ema)[4] <- 'RH_ema'
+RH_ema <- RH_ema[,-c(2,3)]
+
+df <- merge(df, RH_ema, by = "date")
+rm(RH_ema)
 
 #### Add deltaT (original data) ####
 
@@ -439,7 +439,6 @@ rm(temp_year,temp_diff,PCO2_sw_T)
 # Average to 1 year, again.
 df_merge_year_from_month <- timeAverage(df_merge_month, avg.time = '1 year')
 
-#### XXXXXX #####
 
 #### 30-MIN TIMESCALE ####
 NEM_30 <- selectByDate(df, month = c(12,1,2,3))
@@ -453,6 +452,8 @@ NEM <- selectByDate(df_merge_month, month = c(12,1,2,3))
 SWM <- selectByDate(df_merge_month, month = c(6,7,8,9))
 FTM <- selectByDate(df_merge_month, month = c(10,11))
 STM <- selectByDate(df_merge_month, month = c(4,5))
+
+#### RUN THE DATA PROCESSING CODE UNTIL HERE #####
 
 # creating wind rose
 windRose(NEM, ws="WS",wd='WD', paddle = F)
