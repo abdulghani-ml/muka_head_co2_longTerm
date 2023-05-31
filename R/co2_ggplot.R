@@ -1,7 +1,9 @@
 #### PACKAGES ####
 library(ggplot2)
 library(dplyr)
-
+library(tidytable)
+library(tidyr)
+library(openair)
 #### COLOR ####
 col_sample <- c('#F8766D','#00BA38')
 
