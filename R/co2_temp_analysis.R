@@ -107,6 +107,10 @@ plot(df_hour$hour,df_hour$LE,pch=19,col='blue')
 plot(df_hour$hour,df_hour$WS, ylim=c(0,1), pch=19, col='blue')
 plot(df_hour$hour,df_hour$WD,pch=19,col='blue')
 
+plot(df_hour$hour, df_hour$FCO2, pch=19,col='orange')
+
+plot(df_hour$hour, df_hour$WS, pch=19,col='orange')
+
 
 points(df_hour$hour,df_hour$TA, pch=19,col='red')
 lines(df_hour$hour,df_hour$H * 15,col='red')
@@ -124,3 +128,5 @@ corPlot(temp_df, method='spearman')
 cor.test(temp_df$FCO2,temp_df$TS,method='spearman')
 
 cor.test(temp_df$FCO2,temp_df$TA,method='spearman')
+temp <- 29
+Sc <- 2116.8 + (-136.25*temp) + 4.7353*(temp^2) + (-0.092307)*(temp^3) + 0.0007555*(temp^4)
