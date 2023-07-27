@@ -95,8 +95,6 @@ df_sat_year <- timeAverage(df_sat, avg.time = "1 year")
 
 
 
-
-
 #### EC DATA ANALYSIS ####
 
 ##### Import EC data ######
@@ -120,10 +118,10 @@ df_ec$DATE <- strptime(df_ec$DATE, format="%Y-%m-%d %H:%M", tz='Asia/Kuala_Lumpu
 
 ##### Merge df with df_bimet ####
 df <- merge(df_ec,df_biomet,by= c('DATE'))
-
+DATE <- df$DATE # Save the date to a variable
 
 # Using convert_magic to convert all columns to 'character' first
-df <- convert_magic(df[,c(seq(1,ncol(df)))],c(rep('character',times = ncol(df))))
+df <- convert_magic(df[,c(seq(2,ncol(df)))],c(rep('character',times = ncol(df))))
 
 # Changing all the '-9999.0' or '-9999' (missing data) to NA
 for (i in 1:length(df)){
@@ -134,16 +132,16 @@ rm(i)
 # Change all non-factors (or characters) to numeric 
 df[,-1] <- charactersNumeric(df[,-1])
 
-# To check the class
-#sapply(df,class)
 
-# Change the date to POSIXCT format
-df$DATE <- strptime(df$DATE, format = "%Y-%m-%d %H:%M", tz = "Asia/Kuala_Lumpur")
+# Rebind DATE to df
+df <- cbind(DATE, df)
+
 #class(df$DATE)
-df$DATE <- as.POSIXct.POSIXlt(df$DATE)
+df$DATE <- as.POSIXlt(df$DATE)
 
 #Change name DATE to date
 colnames(df)[1] <- "date"
+rm(DATE)
 
 # extracting related variables from raw variables
 df_all <- df
@@ -225,62 +223,62 @@ df <- cbind(df,CD)
 rm(CD)
 
 #### ADD OUTLIER-REMOVED DATA #####
+
+temp <- read.csv('data/station/merged_data.csv')
+temp$datetime <- as.character(temp$datetime)
+date <- strptime(temp$datetime,
+                 format = "%d/%m/%Y %H:%M",
+                 tz = "Asia/Kuala_Lumpur")
+temp <- cbind(date, temp)
+colnames(temp)[3] <- 'EMA'
+colnames(temp)[4] <- 'TA_ema'
+colnames(temp)[5] <- 'RH_ema'
+temp <- temp[,-c(2)]
+
+df <- merge(df, temp, by = "date")
+rm(temp,date)
+
+# ##### Add TS EMA data without data before 10:00 AM ####
 # 
-# temp <- read.csv('data/station/merged_data.csv')
-# temp$datetime <- as.character(temp$datetime)
-# date <- strptime(temp$datetime,
+# ts_ema <- read.csv('data/station/TS_ema.csv')
+# ts_ema$datetime <- as.character(ts_ema$datetime)
+# date <- strptime(ts_ema$datetime,
+#                  format = "%Y-%m-%d %H:%M:%OS",
+#                  tz = "Asia/Kuala_Lumpur")
+# ts_ema <- cbind(date, ts_ema)
+# colnames(ts_ema)[1] <- 'date'
+# ts_ema <- ts_ema[,-c(2,3)]
+# 
+# df <- merge(df, ts_ema, by = "date")
+# rm(ts_ema)
+# 
+# ##### Add TA EMA data without data before 10:00 AM ####
+# 
+# TA_ema <- read.csv('data/station/TA_ema.csv')
+# TA_ema$date <- as.character(TA_ema$date)
+# date <- strptime(TA_ema$date,
 #                  format = "%d/%m/%Y %H:%M",
 #                  tz = "Asia/Kuala_Lumpur")
-# temp <- cbind(date, temp)
-# colnames(temp)[3] <- 'EMA'
-# colnames(temp)[4] <- 'TA_ema'
-# colnames(temp)[5] <- 'RH_ema'
-# temp <- temp[,-c(2)]
+# TA_ema <- cbind(date, TA_ema)
+# colnames(TA_ema)[4] <- 'TA_ema'
+# TA_ema <- TA_ema[,-c(2,3)]
 # 
-# df <- merge(df, temp, by = "date")
-# rm(temp,date)
-
-##### Add TS EMA data without data before 10:00 AM ####
-
-ts_ema <- read.csv('data/station/TS_ema.csv')
-ts_ema$datetime <- as.character(ts_ema$datetime)
-date <- strptime(ts_ema$datetime,
-                 format = "%Y-%m-%d %H:%M:%OS",
-                 tz = "Asia/Kuala_Lumpur")
-ts_ema <- cbind(date, ts_ema)
-colnames(ts_ema)[1] <- 'date'
-ts_ema <- ts_ema[,-c(2,3)]
-
-df <- merge(df, ts_ema, by = "date")
-rm(ts_ema)
-
-##### Add TA EMA data without data before 10:00 AM ####
-
-TA_ema <- read.csv('data/station/TA_ema.csv')
-TA_ema$date <- as.character(TA_ema$date)
-date <- strptime(TA_ema$date,
-                 format = "%d/%m/%Y %H:%M",
-                 tz = "Asia/Kuala_Lumpur")
-TA_ema <- cbind(date, TA_ema)
-colnames(TA_ema)[4] <- 'TA_ema'
-TA_ema <- TA_ema[,-c(2,3)]
-
-df <- merge(df, TA_ema, by = "date")
-rm(TA_ema)
-
-##### Add RH EMA data without data before 10:00 AM ####
-
-RH_ema <- read.csv('data/station/RH_ema.csv')
-RH_ema$date <- as.character(RH_ema$date)
-date <- strptime(RH_ema$date,
-                 format = "%d/%m/%Y %H:%M",
-                 tz = "Asia/Kuala_Lumpur")
-RH_ema <- cbind(date, RH_ema)
-colnames(RH_ema)[4] <- 'RH_ema'
-RH_ema <- RH_ema[,-c(2,3)]
-
-df <- merge(df, RH_ema, by = "date")
-rm(RH_ema)
+# df <- merge(df, TA_ema, by = "date")
+# rm(TA_ema)
+# 
+# ##### Add RH EMA data without data before 10:00 AM ####
+# 
+# RH_ema <- read.csv('data/station/RH_ema.csv')
+# RH_ema$date <- as.character(RH_ema$date)
+# date <- strptime(RH_ema$date,
+#                  format = "%d/%m/%Y %H:%M",
+#                  tz = "Asia/Kuala_Lumpur")
+# RH_ema <- cbind(date, RH_ema)
+# colnames(RH_ema)[4] <- 'RH_ema'
+# RH_ema <- RH_ema[,-c(2,3)]
+# 
+# df <- merge(df, RH_ema, by = "date")
+# rm(RH_ema)
 
 #### CALCULATE DELTA T ####
 
