@@ -206,6 +206,8 @@ df$RN[df$RN < -100] <- NA
 
 df$RN[df$RN > 400] <- NA
 
+df$RG[df$RG < 0] <- NA
+
 df$WS[df$WS > 100] <- NA
 
 df$ZL[abs(df$ZL)>10] <- NA
