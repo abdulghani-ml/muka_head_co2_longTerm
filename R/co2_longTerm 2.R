@@ -185,12 +185,16 @@ df$FCO2_mmol[which(df$FCO2_QC == 2)] <- NA
 df$TAU_QC[which(df$TAU_QC == 2)] <- NA
 ##### Remove FCO2 from land ######
 
-df$FCO2[df$WD > 45 & df$WD < 315] <- NA
-df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
-df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
+# Note: Did not filter based on WD because insufficient data for gap-filling
+# Could be re-added if the focus is on water surfaces.
 
-# Remove FCO2 values that are too high or low.
-df$FCO2[df$FCO2 > 100 | df$FCO2 < -100] <- NA
+#df$FCO2[df$WD > 45 & df$WD < 315] <- NA
+#df$FCO2_mmol[df$WD > 45 & df$WD < 315] <- NA
+#df$co2_mole_fraction[df$WD > 45 & df$WD < 315] <- NA
+
+# Remove FCO2 values that are too high or low. The upper limit is set to 50 because
+# of the recommendation of the REddyProc package.
+df$FCO2[df$FCO2 > 50 | df$FCO2 < -100] <- NA
 
 
 ##### Remove all improbable values of T #####
