@@ -45,9 +45,15 @@ Make a data frame that contains only the necessary variables for REddyProc. They
       * `VPD` 
 
 ```{r Load Muka Head Data}
-load('~/OneDrive - Universiti Sains Malaysia/Documents/research/Data_analysis/muka_head_co2_longTerm/Muka_head.RData')
-Muka_Head <- data.frame(DateTime = df$date, NEE = df$FCO2, Ustar = df$USTAR,
-                   Rg = df$RG, Tair = df$TA_ema, rH = df$RH)
+load('../data/Rdata/Muka_Head.Rdata')
+
+Muka_Head <- data.frame(DateTime = df_merged_filtered$date, 
+                        NEE = df_merged_filtered$FCO2, 
+                        Ustar = df_merged_filtered$USTAR, 
+                        Rg = df_merged_filtered$RG, 
+                        Tair = df_merged_filtered$TA_ema, 
+                        rH = df_merged_filtered$RH)
+
 ```
 
 # Check the Data for Continuity of DateTime
