@@ -21,7 +21,7 @@
 
 #### SAVE DATA ####
 # Save the data in the RDS format
-save(df_merged_filtered, file = "data/RDS/Muka_Head.Rdata")
+save(df_merged_filtered, file = "data/Rdata/Muka_Head.Rdata")
 
 
 #### END ####

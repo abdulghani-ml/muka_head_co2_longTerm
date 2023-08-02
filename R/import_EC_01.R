@@ -141,7 +141,7 @@ df$H[abs(df$H) > 150] <- NA
 ###### Remove all improbable values of LE ####
 df$LE[abs(df$LE) > 400] <- NA
 ###### Remove all improbable values of WS ####
-df$WS[df$WS > 100] <- NA
+df$WS[df$WS > 50] <- NA
 ###### Remove all improbable values of ZL ####
 df$ZL[abs(df$ZL) > 10] <- NA
 ###### Remove all improbable values of USTAR ####

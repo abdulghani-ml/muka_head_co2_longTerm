@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 The package needs to be installed prior to use. You might also need to install other packages  to run REddyProc. You can do so by using the `install.packages` command for their installation.
 
 ```{r Install Package}
-#install.packages("REddyProc", repos = "http://cran.us.r-project.org")
+install.packages("REddyProc", repos = "http://cran.us.r-project.org")
 ```
 
 You will need to load the package after a successful installation. 
@@ -80,7 +80,7 @@ Get an overview of the data. Look at the data parameters and take note of missin
 * Latitude, Longitude: 5.49N, 100.2025E
 
 
-```{r Summary Gebesee}
+```{r Summary Muka Head}
 summary(Muka_Head2)
 ```
 
@@ -105,7 +105,7 @@ The  dataset does not have the VPD parameter, which could be useful for gap-fill
 
 We can calculate VPD using the function `fCalcVPDfromRHandTair`. The input arguments' units are stated in the documentation, `?fCalcVPDfromRHandTair`.
 
-```{r Gebesee Add VPD}
+```{r Muka Head Add VPD}
 VPD <- fCalcVPDfromRHandTair(Muka_Head2$rH,   # The unit is %
                              Muka_Head2$Tair) # The unit is degree Celsius
 Muka_Head2 <- cbind(Muka_Head2,VPD)
@@ -187,6 +187,11 @@ Useful functions for handling the data in the object:
 2. `sExportResults`: Export class internal `sTEMP` data frame with result columns. We can use this after gap-filling the data.
 
 Note that you can create the plots of NEE versus ($u_*$) by using the function `sPlotNEEVersusUStarForSeason`.
+
+```{r}
+EProcMYMkH$sPlotNEEVersusUStarForSeason(dir = "../figs_rmd/")
+```
+
 
 ```{r View u*-Thresholds}
 EProcMYMkH$sGetEstimatedUstarThresholdDistribution()
