@@ -1,0 +1,574 @@
+---
+title: "REddyProc Muka Head Analysis"
+author: "Yusri Yusup"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Step 0: Preliminary Work
+
+## Install the Package
+
+The package needs to be installed prior to use. You might also need to install other packages  to run REddyProc. You can do so by using the `install.packages` command for their installation.
+
+```{r Install Package}
+install.packages("REddyProc", repos = "http://cran.us.r-project.org")
+```
+
+You will need to load the package after a successful installation. 
+
+```{r Load Package}
+library(openair)
+library(REddyProc)
+```
+
+
+# Step 1: Prepare the Data
+
+## Step 1-1: Import the Data
+
+First,we create a data frame suitable for REddyProc.The script co2_longTerm 2.R needs to be run first so that `df` becomes available.
+
+Make a data frame that contains only the necessary variables for REddyProc. They are:
+
+1. `DateTime` in the POSIX format.
+2. `NEE` or carbon dioxide flux.
+3. `Ustar` or friction velocity
+4. Meteorological data for the gap-filling and partitioning steps.
+      * `Rg`, 
+      *`Tair`, 
+      * `rH`, and or 
+      * `VPD` 
+
+```{r Load Muka Head Data}
+load('../data/Rdata/Muka_Head.Rdata')
+
+Muka_Head <- data.frame(DateTime = df_merged_filtered$date, 
+                        NEE = df_merged_filtered$FCO2, 
+                        Ustar = df_merged_filtered$USTAR, 
+                        Rg = df_merged_filtered$RG, 
+                        Tair = df_merged_filtered$TA_ema, 
+                        rH = df_merged_filtered$RH)
+
+```
+
+# Check the Data for Continuity of DateTime
+
+We cannot create the REddyProc object if the `DateTime` variable is not continuous. I use the `openair` package and the `timeAverage` function to fill in the missing time stamps.
+
+```{r Filling DateTime}
+
+Muka_Head2 <- Muka_Head
+names(Muka_Head2)[1] <- "date"
+Muka_Head2 <- timeAverage(Muka_Head2, avg.time = "30 min")
+names(Muka_Head2)[1] <- "DateTime"
+
+```
+
+# Data Overview
+
+Get an overview of the data. Look at the data parameters and take note of missing data or `NA`.
+
+## Characteristics
+
+* Surface: Coastal water
+* Time zone: +8 GMT
+* Latitude, Longitude: 5.49N, 100.2025E
+
+
+```{r Summary Muka Head}
+summary(Muka_Head2)
+```
+
+# Step 1-2: Calculate Needed Parameters
+
+Essential parameters can be calculated from existing parameters using functions available in REddyProc.
+
+Some useful functions are:
+
+1. `fConvertTimeToPosix`.
+2. `fCalcVPDfromRHandTair`. We will use this in the demo.
+3. `fCalcETfromLE` 
+4. `fConvertCtoK`
+
+There are other functions in the package and the function name begins with the prefix `f`.
+
+# Step 1-3: Missing VPD in the Data
+
+The  dataset does not have the VPD parameter, which could be useful for gap-filling and partitioning.
+
+## Calculate VPD
+
+We can calculate VPD using the function `fCalcVPDfromRHandTair`. The input arguments' units are stated in the documentation, `?fCalcVPDfromRHandTair`.
+
+```{r Muka Head Add VPD}
+VPD <- fCalcVPDfromRHandTair(Muka_Head2$rH,   # The unit is %
+                             Muka_Head2$Tair) # The unit is degree Celsius
+Muka_Head2 <- cbind(Muka_Head2,VPD)
+rm(VPD) # A house-keeping step.
+head(Muka_Head2)
+```
+
+# Step 2: Create the Gebesee REddyProc Object Class
+
+Before REddyProc can work on your data, the data has to be converted to the REddyProc object.
+
+Create the data object for the data. The ID is `MY-MkH` and the parameters are:
+
+1. `NEE` 
+2. `Rg`
+3. `Tair`
+4. `VPD`
+5. `Ustar`
+
+```{r Create Class}
+EProcMYMkH <- sEddyProc$new('MY-MkH', Muka_Head2, c('NEE','Rg','Tair','VPD','Ustar'))
+```
+
+# Check the Object
+
+Check the additional info of the data.
+
+```{r Gebesee Info Check}
+EProcMYMkH$sLOCATION
+```
+
+Add the location information. This is important for the daytime-nighttime partitioning analysis because it requires the time to be accurate.
+
+```{r Gebesee Add Info}
+EProcMYMkH$sSetLocationInfo(LatDeg = 5.49, LongDeg = 100.202, TimeZoneHour = 8)  
+EProcMYMkH$sLOCATION
+```
+
+
+# Step 3: $u_*$-Threshold Estimation
+
+Friction velocity, or $u_*$, varies seasonally. Thus, the $u_*$-threshold needs to be estimated for each season. We do this because $u_*$ changes with surface cover. 
+
+However, at Muka Head, $u_*$ should not change appreciably because the water surface condition was unvarying. 
+
+# Optional: Viewing the Data
+
+Plotting the NEE against time shows the trend.
+
+```{r}
+plot(Muka_Head2$DateTime, Muka_Head2$NEE, pch=19, xlab = "Time", ylab = 'NEE', cex = 0.1, col = "darkblue")
+```
+
+
+# Step 3-2-2: Calculate the $u_*$-Thresholds Distributions
+
+We will estimate the ($u_*$) limits using the `sEstimateUstarScenarios` function. The function will write to the data object. The `seasonFactor` is needed here to tell `REddyProc` the season intervals that it must estimate the $u_*$ thresholds. 
+
+The $u_*$ threshold estimation uses the `usEstUstarThreshold` function, which requires the `NEE`, `Tair`, and `seasonFactor`. The function returns the median value.
+
+# The $u_*$-Threshold Distributions
+
+In this example, the $u_*$-threshold is estimated, using the `usEstUstarThreshold` function, `nSample` times, and the $u_*$ limits are reported using the default quantiles of 5%, 50%, and 95%: The low, median, and high values of $u_*$-threholds.
+
+The function adds data to the REddyProc object. It creates the $u_*$ scenarios and place it in the object.
+
+```{r Gebesee Calculate u*-Thresholds, warning=FALSE}
+EProcMYMkH$sEstimateUstarScenarios(nSample = 100,
+                                   probs = c(0.05,0.50,0.95))
+```
+
+# Viewing the Results
+
+The function `sGetEstimatedUstarThresholdDistribution` displays the results.
+
+Useful functions for handling the data in the object:
+
+1. `sExportData`: Export class internal `sDATA` data frame.
+2. `sExportResults`: Export class internal `sTEMP` data frame with result columns. We can use this after gap-filling the data.
+
+Note that you can create the plots of NEE versus ($u_*$) by using the function `sPlotNEEVersusUStarForSeason`.
+
+```{r}
+EProcMYMkH$sPlotNEEVersusUStarForSeason(dir = "../figs_rmd/")
+```
+
+
+```{r View u*-Thresholds}
+EProcMYMkH$sGetEstimatedUstarThresholdDistribution()
+```
+
+```{r Plot NEE Vs UStar}
+#EProcMYMkH$sPlotNEEVersusUStarForSeason(season = '2016006')
+```
+
+# Step 4-1: Gap-Filling the Data
+
+## Step 4-1-1: Check the Use of Seasonal u*-Thresholds
+
+First, we have to ensure the use of seasonal $u_*$-thresholds. If it is not set in the previous step, check that it is used now.
+
+Show the default thresholds: annual
+
+```{r Show Default Thresholds}
+EProcMYMkH$sGetUstarScenarios()
+```
+
+Instruct REddyProc to use the seasonal thresholds.
+
+```{r Use Seasonal Thresholds}
+EProcMYMkH$useSeaonsalUStarThresholds()
+```
+
+Confirm that the seasonal thresholds are used by displaying it.
+
+```{r Confirm Thresholds}
+EProcMYMkH$sGetUstarScenarios()
+```
+
+
+# Step 4-1-2: Gap-Fill the Data
+
+Gap-fill the data using the function `sMDSGapFillUStarScens`. It will filter the data using the $u_*$-thresholds and gap-fill it. 
+
+`MDS` means Marginal Distribution Sampling, which combines:
+
+1. the Look Up Table (LUT)
+2. Mean Diurnal Course (MDC)
+
+Quality flags are created for the gap-filled data: 
+
+* 0: original data
+* 1: good quality gap-filled data, i.e., *more parameters* and *shorter time-windows* used.
+* More than 1: low quality, i.e., *less parameters* and *longer time-windows* used.
+
+The function also calculates the random error for non-gap records by replacing the original values with gap-filled values.
+
+```{r Gap-Filling, message = FALSE}
+EProcMYMkH$sMDSGapFillUStarScens("NEE", FillAll = TRUE)
+```
+
+# Check the New Columns
+
+Check the columns created. Examples are:
+
+* `NEE_05_f`
+* `NEE_95_fall`
+* `NEE_50_fqc`
+
+Definitions:
+
+* NEE_<scenario>_f: gaps replaced by modeled values (gap-filled).
+* NEE_<scenario>_fall: all NEE replaced by modeled values.
+* NEE_<scenario>_fqc: quality flag: 0 observations, 1 good quality of gap-filling. 
+* The non-bootstrapped data has the `uStar` suffix. 
+* The bootstrapped data has the scenario suffix, e.g., `U50`, `U95`, etc.
+
+```{r Column Names}
+colnames(EProcMYMkH$sExportResults())
+```
+
+# View Some Columns
+
+Plotting a column of the REddyProc object.
+
+```{r Gebesee Summary After Gap-Filling}
+plot(EProcMYMkH$sDATA$sDateTime, EProcMYMkH$sExportResults()$Ustar_uStar_Thres, pch = 19, 
+     xlab = 'Time', ylab = 'u*-threshold')
+plot(Muka_Head2$DateTime,Muka_Head2$NEE, pch = 19, cex = 0.1, col = "darkblue",
+     xlab = 'Time', ylab = 'NEE', ylim=c(-50,20), main = "Before u*-Filtering")
+plot(EProcMYMkH$sDATA$sDateTime, EProcMYMkH$sExportResults()$NEE_uStar_orig, pch = 19, 
+     cex = 0.1, col = "darkblue",
+     xlab = 'Time', ylab = 'NEE_uStar_orig', ylim=c(-50,20), 
+     main = "NEE After u*-Filtering")
+plot(EProcMYMkH$sDATA$sDateTime, EProcMYMkH$sExportResults()$NEE_U50_f, pch = 19, 
+     cex = 0.1, col = "darkblue",
+     xlab = 'Time', ylab = 'NEE_U50_f', ylim=c(-50,20),
+     main = "NEE After Gap-Filling")
+plot(EProcMYMkH$sDATA$sDateTime, EProcMYMkH$sExportResults()$NEE_U50_fall, pch = 19, 
+     cex = 0.1, col = "darkblue",
+     xlab = 'Time', ylab = 'NEE_U50_fall', ylim=c(-50,20), 
+     main = "NEE After Gap-Filling All")
+```
+
+
+# Step 4-1-3: Fingerprint Plot
+
+We can also generate a fingerprint plot using the function `sPlotFingerprintY`. This is for the `NEE_U50_f` parameter and the year 2004.
+
+```{r Gebesee Fingerplot for 2006}
+EProcMYMkH$sPlotFingerprintY('NEE_uStar_orig', Year = 2020)
+EProcMYMkH$sPlotFingerprintY('NEE_U50_f', Year = 2020)
+EProcMYMkH$sPlotFingerprintY('NEE_U50_fall', Year = 2020)
+```
+
+We can also produce PDF files with legend for all years in sub-directory "figs_rmd."
+
+```{r Fingerplot for All}
+EProcMYMkH$sPlotFingerprint('NEE_U50_f', Dir = "figs_rmd")
+```
+
+# Step 5-1: Preparing the Data for Partitioning
+
+This step requires the data to have the location (lat, lon) and time zone info because REddyProc uses time to estimate day and night hours. We already did this in the *Step 2*.
+
+There are some weather values that are missing and can be gap-filled here. However, we do not need to replace the original values with gap-filled values because we are not going to calculate random error, `FillAll = FALSE`.
+
+```{r Gap-Fill Met Data, message=FALSE}
+EProcMYMkH$sMDSGapFill('Rg', FillAll = FALSE)     
+EProcMYMkH$sMDSGapFill('Tair', FillAll = FALSE)     
+EProcMYMkH$sMDSGapFill('VPD', FillAll = FALSE)     
+```
+
+## Step 5-1-1:Reichstein Partitioning
+
+In this part, we will partition the data into fractions of the Gross Primary Production (GPP) and ecosystem respiration ($R_{eco}$) using all $u_*$ scenarios. This uses the 'sMRFluxPartitionUStarScens` function. 
+
+Results are added to the object.
+
+More details on the equations used can be found in the paper Reichstein et al. (2005).
+
+```{r Gebesee Reichstein Partitioning, message=FALSE}
+EProcMYMkH$sMRFluxPartitionUStarScens()
+```
+
+## Step 5-1-2: Plotting the GPP
+
+View the result columns. Columns [46] to [104] are added.
+
+```{r Gebesee Extract Reichstein Results}
+names(EProcMYMkH$sExportResults())
+```
+
+# Plot the GPP and Reco
+
+Plot the GPP and Reco for `U50` scenario against time for two days (`48*2`).
+
+```{r Reichstein GPP and Reco Time Series}
+nRec = 48*2 
+plot(head(Muka_Head2$DateTime, nRec), 
+     head(EProcMYMkH$sExportResults()$GPP_U50_f, nRec), 
+     type = "l", xlab = 'Time', ylab = 'NEE_U50')
+lines(head(Muka_Head2$DateTime, nRec), 
+      head(EProcMYMkH$sExportResults()$Reco_U50, nRec), 
+      type = "l", lty = 2,
+      col = 'red')
+
+```
+
+
+## Step 5-1-3:Lasslop Partitioning
+
+Partitioning the data into the  fractions of the Gross Primary Production (GPP) and ecosystem respiration ($R_{eco}$) using all $u_*$ scenarios. This uses the 'sGLFluxPartitionUStarScens` function. 
+
+Results are added to the object.
+
+More details on the equations used can be found in the Lasslop et al. (2010).
+
+```{r Lasslop Partitioning, message=FALSE}
+EProcMYMkH$sGLFluxPartitionUStarScens()
+```
+
+View the result columns. Columns [105] to [140] are added.
+
+```{r Extract Lasslop Results}
+names(EProcMYMkH$sExportResults())
+```
+
+
+Plot the GPP and Reco for `U50` scenario against time for two days (`48*2`).
+
+```{r Lasslop GPP and Reco Time Series}
+nRec <- 48*1 
+plot(head(Muka_Head2$DateTime, nRec), 
+     head(EProcMYMkH$sExportResults()$GPP_DT_U50, nRec), 
+     type = "l", xlab = 'Time', ylab = 'GPP_DT_U50', ylim = c(0, 0.15))
+lines(head(Muka_Head2$DateTime, nRec), 
+      head(EProcMYMkH$sExportResults()$Reco_DT_U50, nRec), 
+      type = "l", lty = 2, col = 'red')
+
+```
+
+## Step 5-1-4: Fingerprint Plots of GPP_DT and Reco_DT 
+
+The fingerprint plots can be plotted for the GPP and $R_{eco}$.
+
+```{r Gebesee Fingerplots of GPP_DT and Reco_DT}
+EProcMYMkH$sPlotFingerprintY('GPP_DT_U50', Year = 2020)
+EProcMYMkH$sPlotFingerprintY('Reco_DT_U50', Year = 2020)
+
+EProcMYMkH$sPlotFingerprint('GPP_DT_U05', Dir = "figs_rmd")
+EProcMYMkH$sPlotFingerprint('Reco_DT_U05', Dir = "figs_rmd")
+
+```
+
+## Step 5-1-5: Export the Results
+
+This part will produce a text file for analysis outside of R. It will be placed in the folder `results_rmd`.
+
+```{r Export Gebesee Results}
+MkHData <- EProcMYMkH$sExportData() # Write the original data to MkHData.
+MkHResults <- EProcMYMkH$sExportResults() # Write the results of REddyProc to MkHResults.
+MkHCombResults <- cbind(MkHData, MkHResults)
+fWriteDataframeToFile(MkHCombResults, "MY-MkH_Part.txt", Dir = "results_rmd")
+```
+
+# Step 6-1: Bias with $u_*$-Threshold
+
+## Calculating the Bias for the Year 2016
+
+We will be calculating the bias of NEE due to the $u_*$-threshold for 2016.
+
+Check the names of the columns of `MkHCombResults`.
+
+```{r Check Names of MkHCombResults}
+names(MkHCombResults)
+```
+
+# Create a Factor Column to Distinguish the Year
+
+First, create an integer column `year`.
+
+```{r Create year}
+MkHCombResults$year <- as.POSIXlt(MkHCombResults$DateTime)$year + 1900
+str(MkHCombResults$year)
+```
+
+Create a subset data frame from the combined results. 
+
+```{r Bias 2017}
+MkH2017 <- subset(MkHCombResults, year == 2017)
+```
+
+# Visualize the Difference of NEE Among the Scenarios
+
+Using a boxplot we can see the changes.
+
+```{r Boxplots}
+boxplot(MkH2017$NEE_U05_f, MkH2017$NEE_U50_f, MkH2017$NEE_U95_f, outline = FALSE)
+boxplot(MkH2017$NEE_U05_f, MkH2017$NEE_U50_f, MkH2017$NEE_U95_f, outline = FALSE, ylim = c(0,1.5))
+```
+
+# Step 6-1-1: Calculate the Annual Mean of NEE for each $u_{*Th}$ Scenario for 2004
+
+We will use the gap-filled 2017 data of the difference scenarios.
+
+Create a variable that contains the means of the different scenarios: `U05`, `U50`, and `U95`.
+
+```{r Mean}
+MkHScenarios <- c("uStar","U05","U50","U95")
+NEE_UStar <- sapply(MkHScenarios, function(suffix){
+  colName = paste0("NEE_",suffix,"_f")
+  mean(MkH2017[[colName]])
+})
+NEE_UStar
+```
+
+## Step 6-1-2: Calculate the Statistics
+
+Calculate the mean, standard deviation, and relative error.
+
+```{r Calculate Statistics}
+c(mean(NEE_UStar), sd(NEE_UStar), sd(NEE_UStar)/abs(mean(NEE_UStar)))
+```
+
+# Step 7-1: Random Uncertainty Aggregation
+
+## Step 7-1-1: Gebesee Calculate Error Terms
+
+To calculate the error, the replaced NEE, the NEE calculated using the gap-filling method or `NEE_uStar_fall`, is subtracted from the original NEE values `NEE_ustar_orig`. The resulting value is the residual.
+
+The original number of non-bootstrapped data for all and 2004.
+
+```{r Number of Original Data}
+n_all <- sum(MkHCombResults$NEE_uStar_fqc == 0) 
+n_all
+n_2017 <- sum(MkH2017$NEE_uStar_fqc == 0)
+n_2017
+```
+
+The residuals are calculated for all the results and the year 2004 for comparison.
+
+```{r Calculate Residuals}
+MkHCombResults$residual <- ifelse(MkHCombResults$NEE_uStar_fqc == 0,
+                                  MkHCombResults$NEE_uStar_orig - MkHCombResults$NEE_uStar_fall, 
+                                  NA)
+
+MkH2017$residual <- ifelse(MkH2017$NEE_uStar_fqc == 0,
+                           MkH2017$NEE_uStar_orig - MkH2017$NEE_uStar_fall,
+                           NA)
+```
+
+# Step 6-1-2: Calculate the Empirical Autocorrelation Function
+
+Calculate the effective autocorrelation components.
+
+```{r Gebesee Autocorrelation}
+library(lognorm)
+rho_all <- computeEffectiveAutoCorr(MkHCombResults$residual)
+plot(rho_all[-1], ylab = 'rho all', pch = 19)
+
+rho_2017 <- computeEffectiveAutoCorr(MkH2017$residual)
+plot(rho_2017[-1], ylab = 'rho 2017', pch = 19)
+```
+
+# Step 6-1-3: Calculate the Effective Number of Observations
+
+We can calculate the number by using the autocorrelation function.
+Create the variable `nEff_all` and compare to the number of good observations `n_all`.
+
+```{r Calculate the Effective Number of Observation}
+
+nEff_all <- computeEffectiveNumObs(MkHCombResults$residual, na.rm = TRUE, effAcf = rho_all)
+c(nEff_all, n_all)
+```
+
+# Step 6-1-4: Calculate the Effective Number of Observation for 2004 
+
+For 2017, create the variable `nEff_2004` and compare to the number of good observations `n_2017`.
+
+```{r Effective Number for 2017}
+nEff_2017 <- computeEffectiveNumObs(MkH2017$residual, na.rm = TRUE, effAcf = rho_2017)
+c(nEff_2017, n_2017)
+```
+
+# Step 6-1-5: Calculate the Mean Annual NEE and Standard Deviation for 2017
+
+Using the non-gap-filled data (`NEE_Ustar_f`), the relative error can be calculated. 
+
+Do not use gap-filled records in the uncertainty estimation here.
+
+The mean, standard deviations, and covariance.
+
+```{r NEE and SD for 2017}
+
+NEE_notGapFilled <- mean(MkH2017$NEE_uStar_f)
+
+sd_notGapFilled <- MkH2017$NEE_uStar_fsd[MkH2017$NEE_uStar_fqc == 0]
+
+sdNEE_notGapFilled = sqrt(mean(sd_notGapFilled^2)) / sqrt(nEff_all - 1)
+
+c(mean = NEE_notGapFilled, sd = sdNEE_notGapFilled, 
+  cv = sdNEE_notGapFilled/abs(NEE_notGapFilled))
+```
+
+## Step 6-1-6: Combined Uncertainties for the $u_*$-Thresholds and Random Uncertainties
+
+Calculate the combined uncertainties of the: 
+
+1. NEE for different $u_*$ scenarios.
+2. NEE not gap-filled.
+
+The combined uncertainties.
+
+```{r Combined Uncertainty}
+sdNEEUStar <- sd(NEE_UStar)
+sdNEECombined <- sqrt(sdNEEUStar^2 + sdNEE_notGapFilled^2)
+sdNEECombined 
+```
+
+# References
+
+Lasslop G, Reichstein M, Papale D, et al. (2010) Separation of net ecosystem exchange into assimilation and respiration using a light response curve approach: critical issues and global evaluation. Global Change Biology, Volume 16, Issue 1, Pages 187-208
+
+Reichstein M, Falge E, Baldocchi D et al. (2005) On the separation of net ecosystem exchange into assimilation and ecosystem respiration: review and improved algorithm. Global Change Biology, 11, 1424-1439.
+
